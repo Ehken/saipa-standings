@@ -8,15 +8,18 @@
     "When a 'Myöhemmin saapuva pelaaja' participant locks in an arrived player, add to their entry:",
     "  \"lockedPlayer\": \"Firstname Lastname\"",
     "If the locked player debuts on or after 20 Dec 2026 (Jokerit-SaiPa), also add the player to",
-    "the lateArrivals list with \"double\": true - the app then doubles his points in the standings.",
-    "NOTE: the entries below are EXAMPLES - replace them with real predictions."
+    "the lateArrivals list with \"double\": true - the app then doubles his points in the standings."
   ],
   "predictions": [
-    { "nickname": "fundaet", "player": "Samuli Niinisaari", "points": 57, "tiebreak": 234 },
-    { "nickname": "esimerkki1", "player": "Petrus Palmu", "points": 48, "tiebreak": 180 },
-    { "nickname": "esimerkki2", "player": "Miikka Salomäki", "points": 39, "tiebreak": 172 },
-    { "nickname": "esimerkki3", "player": "Patrik Siikanen", "points": 44, "tiebreak": 195 },
-    { "nickname": "esimerkki4", "player": "Myöhemmin saapuva pelaaja", "points": 46, "tiebreak": 201 }
+    { "nickname": "dotto", "player": "Petr Fridrich", "points": 52, "tiebreak": 294 },
+    { "nickname": "Hippi Hiiri", "player": "Petrus Palmu", "points": 51, "tiebreak": 199 },
+    { "nickname": "makki71", "player": "Einar Emanuelsson", "points": 55, "tiebreak": 205 },
+    { "nickname": "Ferris", "player": "Santeri Airola", "points": 39, "tiebreak": 167 },
+    { "nickname": "Trimmer", "player": "Petrus Palmu", "points": 57, "tiebreak": 205 },
+    { "nickname": "JonesMLI", "player": "Petrus Palmu", "points": 53, "tiebreak": 201 },
+    { "nickname": "53500", "player": "Petr Fridrich", "points": 51, "tiebreak": 193 },
+    { "nickname": "Amisproröökisuu", "player": "Nicholas Zabaneh", "points": 48, "tiebreak": 211 },
+    { "nickname": "Seula", "player": "Nicholas Zabaneh", "points": 48, "tiebreak": 198 }
   ],
   "lateArrivals": [
   ]
