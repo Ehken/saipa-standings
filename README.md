@@ -28,6 +28,7 @@ and docs are in English.
 | `index.html` | The whole app (single file, no dependencies) |
 | `config.json` | Season, game count, deadline, official player list |
 | `predictions.json` | **The file you edit** — nicknames and predictions |
+| `schedule.json` | SaiPa game dates — controls when stats are fetched |
 | `data/stats.json` | Liiga API data (updated by Actions, do not edit) |
 | `data/meta.json` | Update timestamp (updated by Actions) |
 | `.github/workflows/update-stats.yml` | Scheduled data refresh |
@@ -167,6 +168,10 @@ Before the season starts the new season's data is empty — the page then shows 
   goals from the API data. Mid-season, tiebreak answers are compared against the
   goal-pace projection (answers are about the season-end total).
 - Full ties in the contest standings are marked with * (= a draw would decide).
-- Update frequency: the GitHub Action runs every 2 hours (see the cron line in
-  `.github/workflows/update-stats.yml`); the page itself always fetches the
-  latest JSON on load.
+- Update frequency: the GitHub Action fetches stats hourly on SaiPa **game
+  evenings** only (dates in `schedule.json`, ~16:00–24:00 Finnish time, so the
+  standings update during games and get a final sweep around 23:00), plus one
+  daily sweep at ~noon to catch Liiga's occasional after-the-fact scoring
+  corrections. Manual runs (**Actions → Update stats → Run workflow**) always
+  fetch. If the league reschedules a game, update the date in `schedule.json`.
+  The page itself always fetches the latest JSON on load.

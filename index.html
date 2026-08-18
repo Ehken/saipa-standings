@@ -61,6 +61,10 @@
     box-shadow:0 1px 3px rgba(214,160,0,.55);cursor:help;transform:skewX(-6deg)}
   tr.extra{display:none}
   .tablecard.expanded tr.extra{display:table-row}
+  /* Fixed layout so expanding the table never changes column widths */
+  #scoring table{table-layout:fixed;min-width:680px}
+  #scoring td,#scoring th{overflow:hidden;text-overflow:ellipsis}
+  #scoring td.pickers{white-space:normal}
   .toggle{margin:8px 0 0;background:var(--card);border:1px solid var(--line);
     border-radius:7px;padding:5px 14px;font:inherit;font-size:13.5px;
     color:var(--ink2);cursor:pointer}
@@ -457,11 +461,16 @@ function scoringTable(players, pickersByPlayer){
       <td class="num">${fmt(pl.assists)}</td>
       <td class="num">${pointsTxt}</td>
       <td class="num muted">${fmt(pl.projected)}</td>
-      <td>${tags}</td>
+      <td class="pickers">${tags}</td>
     </tr>`;
   }).join("");
   const hiddenCount = Math.max(0, players.length - SCORING_TABLE_DEFAULT_ROWS);
   return `<div class="tablecard" id="scoring"><table>
+    <colgroup>
+      <col style="width:62px"><col style="width:48px"><col>
+      <col style="width:44px"><col style="width:44px"><col style="width:44px">
+      <col style="width:98px"><col style="width:86px"><col style="width:220px">
+    </colgroup>
     <thead><tr>
       <th>Sija</th><th>#</th><th>Pelaaja</th>
       <th class="num">O</th><th class="num">M</th><th class="num">S</th>

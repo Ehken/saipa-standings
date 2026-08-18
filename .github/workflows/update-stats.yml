@@ -2,8 +2,13 @@ name: Update stats
 
 on:
   schedule:
-    # Every 2 hours (UTC). Plenty - Liiga games finish in the evening.
-    - cron: "13 */2 * * *"
+    # Evening runs (UTC): covers ~16:00-24:00 Finnish time across summer/winter
+    # time. Gated below so the API is only called on SaiPa game days
+    # (schedule.json) - during games and a final sweep at ~23:00.
+    - cron: "5 14-21 * * *"
+    # Daily correction sweep at ~noon Finnish time: Liiga occasionally corrects
+    # scoring afterwards (e.g. goal credited to a different player).
+    - cron: "5 9 * * *"
   workflow_dispatch: {}
 
 permissions:
@@ -15,7 +20,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Skip evening runs on non-game days
+        id: gate
+        run: |
+          # Manual runs and the daily noon sweep always proceed.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || \
+             [ "${{ github.event.schedule }}" = "5 9 * * *" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Map late-night runs back to the game evening: "3 hours ago" in
+          # Helsinki time, so a run just after local midnight still counts as
+          # the previous (game) day.
+          GAMEDAY=$(TZ=Europe/Helsinki date -d "3 hours ago" +%F)
+          if jq -e --arg d "$GAMEDAY" '.gameDates | index($d)' schedule.json > /dev/null; then
+            echo "Game day ($GAMEDAY) - fetching."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No SaiPa game on $GAMEDAY - skipping."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Fetch data from the Liiga API
+        if: steps.gate.outputs.run == 'true'
         run: |
           SEASON=$(jq -r '.season' config.json)
           echo "Fetching season $SEASON"
@@ -39,6 +66,7 @@ jobs:
             '{updatedAt: $t, playerCount: $n}' > data/meta.json
 
       - name: Commit changes
+        if: steps.gate.outputs.run == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
