@@ -35,8 +35,11 @@
   th{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);
     font-weight:600;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
   th:hover{color:var(--ink)}
-  th[data-sort-dir="asc"]::after{content:" ▲";font-size:9px}
-  th[data-sort-dir="desc"]::after{content:" ▼";font-size:9px}
+  th{position:relative}
+  /* Sort arrows are absolutely positioned so they never widen or clip a header */
+  th[data-sort-dir]{color:var(--ink)}
+  th[data-sort-dir="asc"]::after{content:"▲";font-size:8px;position:absolute;margin:2px 0 0 3px}
+  th[data-sort-dir="desc"]::after{content:"▼";font-size:8px;position:absolute;margin:2px 0 0 3px}
   td{border-bottom:1px solid #f0f0ec;font-variant-numeric:tabular-nums}
   tr:last-child td{border-bottom:none}
   tr.lead td{background:var(--accent-soft)}
@@ -60,6 +63,10 @@
     font-weight:800;font-style:italic;font-size:12px;letter-spacing:.4px;
     box-shadow:0 1px 3px rgba(214,160,0,.55);cursor:help;transform:skewX(-6deg)}
   .tb{margin-left:4px;font-size:12px;cursor:help}
+  /* Fixed layout: column widths sized to the longest possible names, so the
+     table never overflows or shifts as content changes */
+  #standings table{table-layout:fixed;min-width:908px}
+  #standings td,#standings th{overflow:hidden;text-overflow:ellipsis}
   tr.extra{display:none}
   .tablecard.expanded tr.extra{display:table-row}
   /* Fixed layout so expanding the table never changes column widths */
@@ -403,11 +410,16 @@ function standingsTable(nowRows, projPositionByNickname){
   const body = nowRows.map(r => {
     const pred = r.pred, pl = r.pl;
     const isLatePick = normalize(pred.player) === LATE_PLAYER;
+    let playerPlain = pred.player;
+    if(isLatePick) playerPlain = pred.lockedPlayer
+      ? "Myöhemmin saapuva → " + pred.lockedPlayer
+      : "Myöhemmin saapuva (ei lukittu)";
     let playerTxt = esc(pred.player);
     if(isLatePick) playerTxt = pred.lockedPlayer
       ? `Myöhemmin saapuva → <b>${esc(pred.lockedPlayer)}</b>`
       : `<span class="muted">Myöhemmin saapuva (ei lukittu)</span>`;
-    const noStats = pl && pl.virtual ? ' <span class="muted small">(ei vielä tilastoissa)</span>' : "";
+    const noStats = pl && pl.virtual
+      ? ' <span class="muted" title="Ei vielä tilastoissa">*</span>' : "";
     // A player with no stats row yet has no meaningful numbers to show.
     const noData = !pl || (pl.virtual && pl.gamesPlayed === 0);
     const diff = noData ? null : pl.projected - pred.points;
@@ -421,9 +433,9 @@ function standingsTable(nowRows, projPositionByNickname){
     const tbIcon = r.tbUsed
       ? `<span class="tb" title="Järjestys ratkesi tiebreak-vastauksella: oma vastaus ${fmt(pred.tiebreak)}, ero maaliennusteeseen ${fmt(r.tiebreakDiff)}.">⚖</span>` : "";
     return `<tr class="${r.position===1 && !r.plain?'lead':''}">
-      <td class="rank">${r.position}.${r.draw?'<span class="muted">*</span>':''}${tbIcon}</td>
+      <td class="rank">${r.position}.${r.draw?'<span class="muted">†</span>':''}${tbIcon}</td>
       <td class="nick" title="Tiebreak-vastaus: ${fmt(pred.tiebreak)}">${esc(pred.nickname)}</td>
-      <td>${playerTxt}${noStats}</td>
+      <td title="${esc(playerPlain)}">${playerTxt}${noStats}</td>
       <td class="num">${fmt(pred.points)}</td>
       <td class="num">${nowTxt}</td>
       <td class="num muted">${noData?"–":"#"+pl.rank_effective}</td>
@@ -433,7 +445,17 @@ function standingsTable(nowRows, projPositionByNickname){
     </tr>`;
   }).join("");
   const anyDraw = nowRows.some(r => r.draw);
-  return `<div class="tablecard"><table>
+  const anyNoStats = nowRows.some(r => r.pl && r.pl.virtual);
+  const footnotes = [
+    anyNoStats ? "* pelaaja ei ole vielä tilastoissa" : null,
+    anyDraw ? "† täysi tasatilanne — järjestyksen ratkaisisi arpa" : null
+  ].filter(Boolean).join(" · ");
+  return `<div class="tablecard" id="standings"><table>
+    <colgroup>
+      <col style="width:54px"><col style="width:148px"><col style="width:184px">
+      <col style="width:96px"><col style="width:106px"><col style="width:100px">
+      <col style="width:90px"><col style="width:88px"><col style="width:60px">
+    </colgroup>
     <thead><tr>
       <th>Sija</th><th>Nimimerkki</th><th>Veikattu pelaaja</th>
       <th class="num">Veikkaus</th><th class="num">Pisteet nyt</th>
@@ -441,7 +463,7 @@ function standingsTable(nowRows, projPositionByNickname){
       <th class="num">Enn. sija</th><th class="num" title="Pelaajan ennuste miinus veikattu pistemäärä">Ero</th>
     </tr></thead><tbody>${body}</tbody>
   </table></div>
-  ${anyDraw?`<div class="footnote">* tasatilanne — järjestyksen ratkaisisi arpa</div>`:""}`;
+  ${footnotes?`<div class="footnote">${footnotes}</div>`:""}`;
 }
 
 const SCORING_TABLE_DEFAULT_ROWS = 5;
@@ -476,7 +498,7 @@ function scoringTable(players, pickersByPlayer){
     return `<tr${i >= SCORING_TABLE_DEFAULT_ROWS ? ' class="extra"' : ''}>
       <td class="rank">${pl.rank_effective}.${tieMark}</td>
       <td class="muted">#${esc(pl.jersey ?? "–")}</td>
-      <td${firstGoalTip}>${esc(pl.name)}${pl.virtual?' <span class="muted small">(ei vielä tilastoissa)</span>':""}</td>
+      <td${firstGoalTip}>${esc(pl.name)}${pl.virtual?' <span class="muted" title="Ei vielä tilastoissa">*</span>':""}</td>
       <td class="num">${fmt(pl.gamesPlayed)}</td>
       <td class="num">${fmt(pl.goals)}</td>
       <td class="num">${fmt(pl.assists)}</td>
@@ -498,6 +520,7 @@ function scoringTable(players, pickersByPlayer){
       <th class="num">P</th><th class="num">Ennuste</th><th>Veikannut</th>
     </tr></thead><tbody>${body}</tbody>
   </table></div>
+  ${players.some(pl => pl.virtual) ? `<div class="footnote">* pelaaja ei ole vielä tilastoissa</div>` : ""}
   ${hiddenCount > 0 ? `<button class="toggle" onclick="toggleScoring(this)"
     data-more="Näytä kaikki (${players.length})" data-less="Näytä top ${SCORING_TABLE_DEFAULT_ROWS}">Näytä kaikki (${players.length})</button>` : ""}`;
 }
