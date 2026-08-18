@@ -33,7 +33,10 @@
   table{border-collapse:collapse;width:100%;min-width:560px}
   th,td{padding:8px 12px;text-align:left;white-space:nowrap}
   th{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);
-    font-weight:600;border-bottom:1px solid var(--line)}
+    font-weight:600;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
+  th:hover{color:var(--ink)}
+  th[data-sort-dir="asc"]::after{content:" ▲";font-size:9px}
+  th[data-sort-dir="desc"]::after{content:" ▼";font-size:9px}
   td{border-bottom:1px solid #f0f0ec;font-variant-numeric:tabular-nums}
   tr:last-child td{border-bottom:none}
   tr.lead td{background:var(--accent-soft)}
@@ -476,6 +479,63 @@ function toggleScoring(btn){
   btn.textContent = expanded ? btn.dataset.less : btn.dataset.more;
 }
 
+// ---------- table sorting ----------
+// Every table is sortable by clicking a column header: numeric columns start
+// descending, text columns ascending; a second click reverses. Rows with no
+// value ("–") always sort last. Reload restores the default (rules-based) order.
+
+function cellSortValue(row, colIndex){
+  const cell = row.cells[colIndex];
+  const text = cell ? cell.textContent.trim().replace(/−/g, "-") : "";
+  if(text === "" || text === "-" || text === "–") return {num: null, text: ""};
+  const m = text.match(/-?\d+(?:[.,]\d+)?/);
+  return {num: m ? parseFloat(m[0].replace(",", ".")) : null, text};
+}
+
+function sortTable(table, th, colIndex){
+  const tbody = table.tBodies[0];
+  const rows = [...tbody.rows];
+  const values = rows.map(r => cellSortValue(r, colIndex));
+  const isNumeric = values.filter(v => v.num !== null).length >= values.length / 2;
+
+  const prev = th.dataset.sortDir;
+  table.querySelectorAll("thead th").forEach(h => delete h.dataset.sortDir);
+  const dir = prev ? (prev === "asc" ? "desc" : "asc") : (isNumeric ? "desc" : "asc");
+  th.dataset.sortDir = dir;
+
+  const sign = dir === "asc" ? 1 : -1;
+  const order = rows.map((row, i) => ({row, v: values[i], i}));
+  order.sort((a, b) => {
+    const av = a.v, bv = b.v;
+    if(av.num === null && bv.num === null && !av.text && !bv.text) return a.i - b.i;
+    // empty values always last regardless of direction
+    const aEmpty = !av.text, bEmpty = !bv.text;
+    if(aEmpty !== bEmpty) return aEmpty ? 1 : -1;
+    let cmp;
+    if(isNumeric && av.num !== null && bv.num !== null) cmp = av.num - bv.num;
+    else cmp = av.text.localeCompare(bv.text, "fi");
+    return cmp === 0 ? a.i - b.i : sign * cmp;
+  });
+  order.forEach(o => tbody.appendChild(o.row));
+
+  // Sorting the scoring table only makes sense fully expanded.
+  const scoringCard = table.closest("#scoring");
+  if(scoringCard && !scoringCard.classList.contains("expanded")){
+    scoringCard.classList.add("expanded");
+    const btn = document.querySelector("button.toggle[data-less]");
+    if(btn) btn.textContent = btn.dataset.less;
+  }
+}
+
+function initTableSorting(){
+  document.querySelectorAll(".tablecard table").forEach(table => {
+    table.querySelectorAll("thead th").forEach((th, colIndex) => {
+      th.title = th.title || "Järjestä";
+      th.addEventListener("click", () => sortTable(table, th, colIndex));
+    });
+  });
+}
+
 function tiebreakTable(predictions, projectedGoals){
   const body = [...predictions]
     .sort((a,b) => Math.abs(a.tiebreak-projectedGoals) - Math.abs(b.tiebreak-projectedGoals))
@@ -487,7 +547,7 @@ function tiebreakTable(predictions, projectedGoals){
         <td class="num muted">${d===0?"±0":(d>0?"+":"−")+fmt(Math.abs(d))}</td>
       </tr>`;
     }).join("");
-  return `<div class="tablecard"><table style="min-width:360px;max-width:480px">
+  return `<div class="tablecard"><table>
     <thead><tr><th>Nimimerkki</th><th class="num">Vastaus</th>
     <th class="num">Ero ennusteeseen (${fmt(projectedGoals)})</th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
@@ -623,6 +683,7 @@ async function main(){
   }
 
   document.getElementById("app").innerHTML = html;
+  initTableSorting();
 }
 
 main().catch(err => {
