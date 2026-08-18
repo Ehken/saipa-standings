@@ -33,7 +33,8 @@
     { "nickname": "Gotterdam", "player": "Petrus Palmu", "points": 49, "tiebreak": 194 },
     { "nickname": "Reinhart", "player": "Petr Fridrich", "points": 49, "tiebreak": 198 },
     { "nickname": "Kaner", "player": "Aarne Intonen", "points": 47, "tiebreak": 195 },
-    { "nickname": "avatar", "player": "Petrus Palmu", "points": 60, "tiebreak": 200 }
+    { "nickname": "avatar", "player": "Petrus Palmu", "points": 60, "tiebreak": 200 },
+    { "nickname": "tonz@", "player": "Aarne Intonen", "points": 50, "tiebreak": 220 }
   ],
   "lateArrivals": [
   ]
