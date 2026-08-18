@@ -334,13 +334,14 @@ function targetName(pred){
 
 // Order participants by the competition rules for the given points key
 // ("effective" = current, "projected" = pace projection):
-// picked player's standings rank -> closest points guess -> closest tiebreak answer -> draw.
+// picked player's standings rank -> closest points guess -> closest tiebreak answer.
+// Anything the rules cannot separate falls back to signup order (file order).
 function orderCompetition(predictions, playerByKey, key, referenceGoals){
-  const rows = predictions.map(pred => {
+  const rows = predictions.map((pred, idx) => {
     const tn = targetName(pred);
     const pl = tn ? playerByKey.get(normalize(tn)) : null;
     return {
-      pred, pl,
+      pred, pl, idx,
       rank: pl ? pl["rank_"+key] : Infinity,
       pointsDiff: pl ? Math.abs(pred.points - pl[key]) : Infinity,
       tiebreakDiff: Number.isFinite(referenceGoals)
@@ -349,7 +350,7 @@ function orderCompetition(predictions, playerByKey, key, referenceGoals){
   });
   rows.sort((a,b) =>
     a.rank-b.rank || a.pointsDiff-b.pointsDiff || a.tiebreakDiff-b.tiebreakDiff ||
-    a.pred.nickname.localeCompare(b.pred.nickname,"fi"));
+    a.idx-b.idx);
   let rank = 0, prevSig = null;
   rows.forEach((r,i) => {
     const sig = [r.rank, r.pointsDiff, r.tiebreakDiff].join("|");
@@ -394,21 +395,23 @@ function standingsTable(nowRows, projPositionByNickname){
       ? `Myöhemmin saapuva → <b>${esc(pred.lockedPlayer)}</b>`
       : `<span class="muted">Myöhemmin saapuva (ei lukittu)</span>`;
     const noStats = pl && pl.virtual ? ' <span class="muted small">(ei vielä tilastoissa)</span>' : "";
-    const diff = pl ? pl.projected - pred.points : null;
+    // A player with no stats row yet has no meaningful numbers to show.
+    const noData = !pl || (pl.virtual && pl.gamesPlayed === 0);
+    const diff = noData ? null : pl.projected - pred.points;
     const diffTxt = diff === null ? '<span class="muted">–</span>'
       : diff === 0 ? "±0"
       : diff > 0 ? `<span class="pos">+${fmt(diff)}</span>`
                  : `<span class="neg">−${fmt(-diff)}</span>`;
-    const nowTxt = !pl ? "–" : pl.doubled
+    const nowTxt = noData ? "–" : pl.doubled
       ? `<b>${fmt(pl.effective)}</b>${multiBadge(pl)}` : fmt(pl.effective);
-    const projTxt = !pl ? "–" : fmt(pl.projected);
-    return `<tr class="${r.position===1?'lead':''}">
+    const projTxt = noData ? "–" : fmt(pl.projected);
+    return `<tr class="${r.position===1 && !r.plain?'lead':''}">
       <td class="rank">${r.position}.${r.draw?'<span class="muted">*</span>':''}</td>
       <td class="nick">${esc(pred.nickname)}</td>
       <td>${playerTxt}${noStats}</td>
       <td class="num">${fmt(pred.points)}</td>
       <td class="num">${nowTxt}</td>
-      <td class="num muted">${pl?"#"+pl.rank_effective:"–"}</td>
+      <td class="num muted">${noData?"–":"#"+pl.rank_effective}</td>
       <td class="num">${projTxt}</td>
       <td class="num muted">${projPositionByNickname.has(pred.nickname)?projPositionByNickname.get(pred.nickname)+".":"–"}</td>
       <td class="num">${diffTxt}</td>
@@ -563,20 +566,25 @@ function initTableSorting(){
   });
 }
 
-function tiebreakTable(predictions, projectedGoals){
-  const body = [...predictions]
-    .sort((a,b) => Math.abs(a.tiebreak-projectedGoals) - Math.abs(b.tiebreak-projectedGoals))
-    .map(pred => {
-      const d = pred.tiebreak - projectedGoals;
-      return `<tr>
-        <td class="nick">${esc(pred.nickname)}</td>
-        <td class="num">${fmt(pred.tiebreak)}</td>
-        <td class="num muted">${d===0?"±0":(d>0?"+":"−")+fmt(Math.abs(d))}</td>
-      </tr>`;
-    }).join("");
+// Before the season there is nothing to compare against: keep signup order, no diff.
+function tiebreakTable(predictions, projectedGoals, started){
+  const rows = started
+    ? [...predictions].sort((a,b) =>
+        Math.abs(a.tiebreak-projectedGoals) - Math.abs(b.tiebreak-projectedGoals))
+    : predictions;
+  const body = rows.map(pred => {
+    const d = pred.tiebreak - projectedGoals;
+    const diffTxt = !started ? "–" : d===0 ? "±0" : (d>0?"+":"−")+fmt(Math.abs(d));
+    return `<tr>
+      <td class="nick">${esc(pred.nickname)}</td>
+      <td class="num">${fmt(pred.tiebreak)}</td>
+      <td class="num muted">${diffTxt}</td>
+    </tr>`;
+  }).join("");
+  const diffHeader = started ? `Ero ennusteeseen (${fmt(projectedGoals)})` : "Ero ennusteeseen";
   return `<div class="tablecard"><table>
     <thead><tr><th>Nimimerkki</th><th class="num">Vastaus</th>
-    <th class="num">Ero ennusteeseen (${fmt(projectedGoals)})</th></tr></thead>
+    <th class="num">${diffHeader}</th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
 }
 
@@ -665,7 +673,10 @@ async function main(){
 
   if(!seasonStarted){
     html += `<div class="notice">Kausi ei ole vielä alkanut — tilanne ja ennusteet päivittyvät,
-      kun kiekko putoaa jäähän. Alla jätetyt veikkaukset.</div>`;
+      kun kiekko putoaa jäähän. Alla jätetyt veikkaukset ilmoittautumisjärjestyksessä.</div>`;
+    // Before the season the rules cannot order anyone: show signup order, no leader.
+    nowRows.sort((a,b) => a.idx - b.idx);
+    nowRows.forEach((r,i) => { r.position = i + 1; r.draw = false; r.plain = true; });
     html += `<h2>Veikkaukset</h2>` + standingsTable(nowRows, new Map());
   } else {
     const projRows = orderCompetition(data.predictions, playerByKey, "projected", projectedGoals);
@@ -696,9 +707,10 @@ async function main(){
   html += scoringTable([...players].sort((a,b) => a.rank_effective - b.rank_effective), pickersByPlayer);
 
   html += `<h2>Tiebreak: SaiPan maalit runkosarjassa</h2>
-    <p class="hint">Maaleja tähän mennessä: <b>${fmt(teamGoals)}</b> — tahtiennuste koko kaudelle:
-    <b>${fmt(projectedGoals)}</b>.</p>`;
-  html += tiebreakTable(data.predictions, projectedGoals);
+    <p class="hint">${seasonStarted
+      ? `Maaleja tähän mennessä: <b>${fmt(teamGoals)}</b> — tahtiennuste koko kaudelle: <b>${fmt(projectedGoals)}</b>.`
+      : `Vastaukset ilmoittautumisjärjestyksessä — vertailu alkaa, kun kausi alkaa.`}</p>`;
+  html += tiebreakTable(data.predictions, projectedGoals, seasonStarted);
 
   // Admin-only copy-paste list of received predictions, for posting on the forum.
   if(IS_ADMIN){

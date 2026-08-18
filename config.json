@@ -1,7 +1,7 @@
 {
   "competition": "SaiPan pistepörssikisa 2026-2027",
-  "season": 2026,
-  "seasonNote": "IMPORTANT: season 2026 = last season 2025-26 (development data). Change to 2027 when the 2026-27 season starts and the Liiga API serves its data.",
+  "season": 2027,
+  "seasonNote": "Season 2027 = 2026-27 in the Liiga API. The API returns an empty array until the season starts; the page shows a 'season has not started' notice until then.",
   "regularSeasonGames": 64,
   "doubleRuleNote": "A late-arriving player's points are doubled if he debuts on or after 20 Dec 2026 (Jokerit-SaiPa, game 33/64). The double flag is set in predictions.json.",
   "firstGoalsNote": "Art Ross tiebreak 3: earliest first goal. Only needed when players are fully tied (points, goals, games). Add entries like \"Firstname Lastname\": \"2026-09-12T19:42:00+03:00\" - also shown as a tooltip on the player's name.",
