@@ -25,7 +25,9 @@
     { "nickname": "Weekend_Warrior", "player": "Petr Fridrich", "points": 61, "tiebreak": 217 },
     { "nickname": "Rautanaamio", "player": "Petr Fridrich", "points": 50, "tiebreak": 250 },
     { "nickname": "Etäfani222", "player": "Petr Fridrich", "points": 50, "tiebreak": 192 },
-    { "nickname": "anthax", "player": "Patrik Siikanen", "points": 51, "tiebreak": 203 }
+    { "nickname": "anthax", "player": "Patrik Siikanen", "points": 51, "tiebreak": 203 },
+    { "nickname": "Krepo", "player": "Petrus Palmu", "points": 44, "tiebreak": 177 },
+    { "nickname": "HNaski", "player": "Petrus Palmu", "points": 32, "tiebreak": 185 }
   ],
   "lateArrivals": [
   ]
