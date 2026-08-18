@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SaiPan pistepörssikisa 2026-2027</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23ffd200'/%3E%3Ctext x='8' y='12' font-size='11' font-weight='bold' text-anchor='middle' fill='%23222'%3ES%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#fafaf8; --card:#ffffff; --line:#e5e5e1;
+    --ink:#1d1d1f; --ink2:#5c5c60; --ink3:#8e8e93;
+    --accent:#ffd200; --accent-soft:#fff6cc;
+    --good:#1d7a34; --bad:#b3362b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:24px 16px 56px}
+  header{padding:8px 0 16px;border-bottom:3px solid var(--accent);margin-bottom:20px}
+  h1{margin:0 0 4px;font-size:clamp(20px,4vw,28px)}
+  .meta{margin-top:10px;font-size:13.5px;color:var(--ink2)}
+  .meta b{color:var(--ink)}
+  .meta span{margin-right:16px;white-space:nowrap}
+  h2{font-size:17px;margin:28px 0 8px}
+  .hint{font-size:13px;color:var(--ink3);margin:0 0 8px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .card .label{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3)}
+  .card .who{font-size:21px;font-weight:700;margin:2px 0}
+  .card .who small{font-size:14px;font-weight:400;color:var(--ink2)}
+  .card .why{font-size:13px;color:var(--ink2)}
+  .tablecard{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:560px}
+  th,td{padding:8px 12px;text-align:left;white-space:nowrap}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);
+    font-weight:600;border-bottom:1px solid var(--line)}
+  td{border-bottom:1px solid #f0f0ec;font-variant-numeric:tabular-nums}
+  tr:last-child td{border-bottom:none}
+  tr.lead td{background:var(--accent-soft)}
+  td.num,th.num{text-align:right}
+  .rank{color:var(--ink3);width:34px}
+  tr.lead .rank{color:var(--ink);font-weight:700}
+  .nick{font-weight:600}
+  .muted{color:var(--ink3)}
+  .small{font-size:12.5px}
+  .pos{color:var(--good)} .neg{color:var(--bad)}
+  .tag{display:inline-block;background:#f1f1ed;border:1px solid var(--line);
+    border-radius:999px;padding:0 8px;font-size:12px;color:var(--ink2);margin:1px 2px 1px 0}
+  .notice{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:8px;padding:10px 14px;margin-top:14px;color:var(--ink2);font-size:14px}
+  .warnbox{background:#fdf2f1;border:1px solid #e8c2bd;border-radius:8px;
+    padding:10px 14px;margin-top:16px;font-size:13.5px;color:var(--ink2)}
+  .warnbox b{color:var(--bad)}
+  .footnote{font-size:12.5px;color:var(--ink3);margin:6px 2px}
+  .multi{display:inline-block;margin-left:6px;padding:0 7px 1px;border-radius:6px;
+    background:linear-gradient(135deg,#ffe15c,#ffc400);color:#1d1d1f;
+    font-weight:800;font-style:italic;font-size:12px;letter-spacing:.4px;
+    box-shadow:0 1px 3px rgba(214,160,0,.55);cursor:help;transform:skewX(-6deg)}
+  tr.extra{display:none}
+  .tablecard.expanded tr.extra{display:table-row}
+  .toggle{margin:8px 0 0;background:var(--card);border:1px solid var(--line);
+    border-radius:7px;padding:5px 14px;font:inherit;font-size:13.5px;
+    color:var(--ink2);cursor:pointer}
+  .toggle:hover{border-color:#c9c9c4}
+  a{color:#8a6d00}
+  @media (max-width:560px){ th,td{padding:7px 8px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>SaiPan pistepörssikisa 2026&#8209;2027</h1>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <div id="app">Ladataan…</div>
+</div>
+
+<script>
+"use strict";
+
+// ---------- helpers ----------
+
+const normalize = s => (s||"").toString().toLowerCase()
+  .normalize("NFD").replace(/[̀-ͯ]/g,"")
+  .replace(/\s+/g," ").trim();
+const LATE_PLAYER = "myohemmin saapuva pelaaja"; // normalized form of the special pick
+const esc = s => (s??"").toString().replace(/[&<>"']/g,
+  c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => Number.isFinite(n) ? n.toLocaleString("fi-FI") : "–";
+const FI_DATETIME = {timeZone:"Europe/Helsinki",day:"numeric",month:"numeric",
+  year:"numeric",hour:"2-digit",minute:"2-digit"};
+
+async function loadJSON(path){
+  const r = await fetch(path + "?v=" + Date.now());
+  if(!r.ok) throw new Error(path + ": " + r.status);
+  return r.json();
+}
+
+// Admin mode (?admin): shows the image-export button and data-quality warnings.
+const IS_ADMIN = new URLSearchParams(location.search).has("admin");
+
+// Snapshot of the current standings for the image export, set at the end of main().
+let exportState = null;
+
+// Draw the current standings as a game/broadcast-style PNG (for posting on the
+// forum) and download it. Pure canvas, no dependencies.
+function exportStandingsImage(){
+  if(!exportState || !exportState.seasonStarted){
+    alert("Ei vielä tilannetta vietäväksi — kausi ei ole alkanut.");
+    return;
+  }
+  const {rows, teamGamesPlayed, totalGames, teamGoals, projectedGoals, updatedTxt} = exportState;
+  const W = 1000, PAD = 40, HEADER_H = 140, COLHEAD_H = 28,
+        ROW_H = 62, ROW_GAP = 10, FOOTER_H = 66;
+  const H = HEADER_H + COLHEAD_H + rows.length * (ROW_H + ROW_GAP) + FOOTER_H;
+  const SCALE = 2;
+  const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+  const GOLD = "#ffd200", DARK = "#17171a", MUTED = "#9a9aa3";
+
+  const canvas = document.createElement("canvas");
+  canvas.width = W * SCALE; canvas.height = H * SCALE;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(SCALE, SCALE);
+
+  const rightText = (txt, xRight, y) => ctx.fillText(txt, xRight - ctx.measureText(txt).width, y);
+  const truncate = (txt, maxW) => {
+    if(ctx.measureText(txt).width <= maxW) return txt;
+    while(txt.length > 1 && ctx.measureText(txt + "…").width > maxW) txt = txt.slice(0, -1);
+    return txt + "…";
+  };
+  const roundRect = (x, y, w, h, r) => {
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h);
+  };
+  // Skewed parallelogram, the "game plate" shape.
+  const plate = (x, y, w, h, skew) => {
+    ctx.beginPath();
+    ctx.moveTo(x + skew, y); ctx.lineTo(x + w, y);
+    ctx.lineTo(x + w - skew, y + h); ctx.lineTo(x, y + h);
+    ctx.closePath();
+  };
+
+  // --- background ---
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, "#14151c"); bg.addColorStop(1, "#0b0c10");
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = GOLD; ctx.fillRect(0, 0, W, 6);
+
+  // decorative skewed stripes, top right
+  [[1, GOLD], [0.45, GOLD], [0.18, GOLD]].forEach(([a, c], i) => {
+    ctx.globalAlpha = a;
+    plate(W - 96 - i * 34, 34, 20, 46, 14);
+    ctx.fillStyle = c; ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // --- header ---
+  ctx.fillStyle = GOLD;
+  ctx.font = "italic 800 36px " + FONT;
+  ctx.fillText("TULOSTAULU", PAD, 68);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "600 13px " + FONT;
+  ctx.fillText("S A I P A N   P I S T E P Ö R S S I K I S A   2 0 2 6 - 2 0 2 7", PAD, 94);
+  ctx.fillStyle = MUTED;
+  ctx.font = "400 13px " + FONT;
+  ctx.fillText(`Otteluita ${teamGamesPlayed}/${totalGames}  ·  SaiPan maalit ${teamGoals} (ennuste ${projectedGoals})  ·  ${updatedTxt}`, PAD, 118);
+
+  // --- column labels ---
+  const COL = { veikkausR: W - PAD - 208, pisteetR: W - PAD - 110, ennusteR: W - PAD - 12 };
+  const nameX = PAD + 74;
+  const playerMaxW = COL.veikkausR - 90 - nameX;
+  let y = HEADER_H + 14;
+  ctx.font = "700 11px " + FONT;
+  ctx.fillStyle = "rgba(255,210,0,.8)";
+  rightText("VEIKKAUS", COL.veikkausR, y);
+  rightText("PISTEET", COL.pisteetR, y);
+  rightText("ENNUSTE", COL.ennusteR, y);
+
+  // --- rows ---
+  const tableTop = HEADER_H + COLHEAD_H;
+  rows.forEach((r, i) => {
+    const top = tableTop + i * (ROW_H + ROW_GAP);
+    const lead = r.position === 1;
+    const pred = r.pred, pl = r.pl;
+
+    // row card
+    if(lead){
+      const g = ctx.createLinearGradient(0, top, 0, top + ROW_H);
+      g.addColorStop(0, "#ffe15c"); g.addColorStop(1, "#ffc400");
+      ctx.fillStyle = g;
+    } else {
+      const g = ctx.createLinearGradient(0, top, 0, top + ROW_H);
+      g.addColorStop(0, "#1d1f28"); g.addColorStop(1, "#171922");
+      ctx.fillStyle = g;
+    }
+    roundRect(PAD - 8, top, W - 2 * (PAD - 8), ROW_H, 12);
+    ctx.fill();
+    if(!lead){ ctx.strokeStyle = "#282a35"; ctx.lineWidth = 1; ctx.stroke(); }
+
+    const inkMain = lead ? DARK : "#ffffff";
+    const inkSub  = lead ? "rgba(23,23,26,.66)" : MUTED;
+    const inkBig  = lead ? DARK : GOLD;
+
+    // rank plate
+    plate(PAD + 8, top + 15, 40, 32, 9);
+    ctx.fillStyle = lead ? DARK : "#272935";
+    ctx.fill();
+    ctx.font = "italic 800 17px " + FONT;
+    ctx.fillStyle = GOLD;
+    const rankTxt = r.position + (r.draw ? "*" : "");
+    ctx.fillText(rankTxt, PAD + 28 - ctx.measureText(rankTxt).width / 2, top + 38);
+
+    // nickname + picked player
+    ctx.font = "700 17px " + FONT;
+    ctx.fillStyle = inkMain;
+    ctx.fillText((lead ? "🏆 " : "") + truncate(pred.nickname, playerMaxW), nameX, top + 27);
+    const isLatePick = normalize(pred.player) === LATE_PLAYER;
+    let playerTxt = pred.player;
+    if(isLatePick) playerTxt = pred.lockedPlayer
+      ? "Myöhemmin saapuva → " + pred.lockedPlayer
+      : "Myöhemmin saapuva (ei lukittu)";
+    ctx.font = "400 13px " + FONT;
+    ctx.fillStyle = inkSub;
+    ctx.fillText(truncate(playerTxt, playerMaxW), nameX, top + 47);
+
+    // numbers
+    const base = top + ROW_H / 2 + 6;
+    ctx.font = "500 15px " + FONT;
+    ctx.fillStyle = inkSub;
+    rightText(fmt(pred.points), COL.veikkausR, base);
+    ctx.font = "800 22px " + FONT;
+    ctx.fillStyle = inkBig;
+    rightText(pl ? fmt(pl.effective) : "–", COL.pisteetR, base + 1);
+    if(pl && pl.doubled){
+      // game-style ×2 multiplier badge
+      const bx = COL.pisteetR + 10, by = base - 15, bw = 34, bh = 20;
+      plate(bx, by, bw, bh, 6);
+      ctx.fillStyle = lead ? DARK : GOLD;
+      ctx.fill();
+      ctx.font = "italic 800 13px " + FONT;
+      ctx.fillStyle = lead ? GOLD : DARK;
+      ctx.fillText("×2", bx + bw / 2 - ctx.measureText("×2").width / 2 + 1, by + 15);
+    }
+    ctx.font = "500 15px " + FONT;
+    ctx.fillStyle = inkSub;
+    rightText(pl ? fmt(pl.projected) : "–", COL.ennusteR, base);
+  });
+
+  // --- footer ---
+  const fy = H - 24;
+  ctx.strokeStyle = "#23242e"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD, fy - 18); ctx.lineTo(W - PAD, fy - 18); ctx.stroke();
+  ctx.font = "400 12px " + FONT;
+  ctx.fillStyle = MUTED;
+  ctx.fillText("Sija: pörssisija → lähin pisteveikkaus → tiebreak" +
+    (rows.some(r => r.draw) ? "  ·  * tasatilanne" : "") +
+    (rows.some(r => r.pl && r.pl.doubled) ? "  ·  ×2 = myöhemmin saapuneen tuplapisteet" : "") +
+    "  ·  Data: liiga.fi", PAD, fy);
+
+  const link = document.createElement("a");
+  link.download = "saipan-pisteporssikisa-tulostaulu-" + new Date().toISOString().slice(0,10) + ".png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+
+// ---------- data model ----------
+
+// Build skater objects from the raw Liiga API stats.
+// firstGoals: optional map of player name -> first goal datetime (from config.json),
+// used as the last Art Ross tiebreak and shown as a tooltip.
+function buildPlayers(stats, lateArrivals, firstGoals){
+  const doubleByName = new Map(lateArrivals.map(p => [normalize(p.name), !!p.double]));
+  const firstGoalByName = new Map(
+    Object.entries(firstGoals || {}).map(([n,d]) => [normalize(n), d]));
+  return stats
+    .filter(p => !p.goalkeeper && p.role !== "MV")
+    .map(p => {
+      const name = (p.firstName + " " + p.lastName).trim();
+      const doubled = doubleByName.get(normalize(name)) === true;
+      const firstGoal = firstGoalByName.get(normalize(name)) || null;
+      const firstGoalTs = firstGoal ? Date.parse(firstGoal) : Infinity;
+      return {
+        name, key: normalize(name),
+        jersey: p.jersey,
+        gamesPlayed: p.playedGames ?? 0,
+        goals: p.goals ?? 0,
+        assists: p.assists ?? 0,
+        points: p.points ?? 0,
+        teamGames: p.games ?? (p.playedGames ?? 0),
+        doubled,
+        firstGoal, firstGoalTs,
+        virtual: false // true = predicted player who is not in the stats yet
+      };
+    });
+}
+
+// Art Ross tiebreak: points, more goals, fewer games, earlier first goal.
+// A remaining full tie gets a flag (add first goal times to config.json to resolve).
+function rankPlayers(players, key){
+  const sorted = [...players].sort((a,b) =>
+    b[key]-a[key] || b.goals-a.goals || a.gamesPlayed-b.gamesPlayed ||
+    a.firstGoalTs-b.firstGoalTs || a.key.localeCompare(b.key));
+  const sigOf = pl => [pl[key], pl.goals, pl.gamesPlayed, pl.firstGoalTs].join("|");
+  let rank = 0, prevSig = null;
+  sorted.forEach((pl,i) => {
+    const sig = sigOf(pl);
+    if(sig !== prevSig){ rank = i+1; prevSig = sig; }
+    pl["rank_"+key] = rank;
+  });
+  const groups = {};
+  sorted.forEach(pl => (groups[sigOf(pl)] = groups[sigOf(pl)] || []).push(pl));
+  Object.values(groups).forEach(g => {
+    if(g.length > 1 && g[0][key] > 0) g.forEach(pl => pl["tie_"+key] = true);
+  });
+  return sorted;
+}
+
+// Which player a prediction currently targets (null = late pick not locked yet).
+function targetName(pred){
+  if(normalize(pred.player) === LATE_PLAYER) return pred.lockedPlayer || null;
+  return pred.player;
+}
+
+// Order participants by the competition rules for the given points key
+// ("effective" = current, "projected" = pace projection):
+// picked player's standings rank -> closest points guess -> closest tiebreak answer -> draw.
+function orderCompetition(predictions, playerByKey, key, referenceGoals){
+  const rows = predictions.map(pred => {
+    const tn = targetName(pred);
+    const pl = tn ? playerByKey.get(normalize(tn)) : null;
+    return {
+      pred, pl,
+      rank: pl ? pl["rank_"+key] : Infinity,
+      pointsDiff: pl ? Math.abs(pred.points - pl[key]) : Infinity,
+      tiebreakDiff: Number.isFinite(referenceGoals)
+        ? Math.abs(pred.tiebreak - referenceGoals) : Infinity
+    };
+  });
+  rows.sort((a,b) =>
+    a.rank-b.rank || a.pointsDiff-b.pointsDiff || a.tiebreakDiff-b.tiebreakDiff ||
+    a.pred.nickname.localeCompare(b.pred.nickname,"fi"));
+  let rank = 0, prevSig = null;
+  rows.forEach((r,i) => {
+    const sig = [r.rank, r.pointsDiff, r.tiebreakDiff].join("|");
+    if(sig !== prevSig){ rank = i+1; prevSig = sig; }
+    r.position = rank;
+    r.draw = false;
+  });
+  const groups = {};
+  rows.forEach(r => (groups[r.position] = groups[r.position] || []).push(r));
+  Object.values(groups).forEach(g => { if(g.length > 1) g.forEach(r => r.draw = true); });
+  return rows;
+}
+
+// ---------- rendering ----------
+
+function leaderCardHTML(label, rows, key, suffix){
+  const top = rows.filter(r => r.position === 1);
+  if(!top.length) return "";
+  const names = top.map(r => esc(r.pred.nickname)).join(" & ");
+  const r0 = top[0];
+  let why = "veikkaus ei ole vielä kohdistunut pelaajaan";
+  if(r0.pl){
+    const doubledTxt = r0.pl.doubled ? " (tuplattuna)" : "";
+    why = `${esc(r0.pl.name)} — ${fmt(r0.pl[key])} p${doubledTxt}${suffix}, ` +
+          `veikkaus ${fmt(r0.pred.points)} (ero ${fmt(r0.pointsDiff)})`;
+  }
+  const drawTxt = top.length > 1 ? ` <small>— tasan, arpa ratkaisisi</small>` : "";
+  return `<div class="card">
+    <div class="label">${label}</div>
+    <div class="who">${names}${drawTxt}</div>
+    <div class="why">${why}</div>
+  </div>`;
+}
+
+// One combined standings table: current situation + pace projection.
+function standingsTable(nowRows, projPositionByNickname){
+  const body = nowRows.map(r => {
+    const pred = r.pred, pl = r.pl;
+    const isLatePick = normalize(pred.player) === LATE_PLAYER;
+    let playerTxt = esc(pred.player);
+    if(isLatePick) playerTxt = pred.lockedPlayer
+      ? `Myöhemmin saapuva → <b>${esc(pred.lockedPlayer)}</b>`
+      : `<span class="muted">Myöhemmin saapuva (ei lukittu)</span>`;
+    const noStats = pl && pl.virtual ? ' <span class="muted small">(ei vielä tilastoissa)</span>' : "";
+    const diff = pl ? pl.projected - pred.points : null;
+    const diffTxt = diff === null ? '<span class="muted">–</span>'
+      : diff === 0 ? "±0"
+      : diff > 0 ? `<span class="pos">+${fmt(diff)}</span>`
+                 : `<span class="neg">−${fmt(-diff)}</span>`;
+    const nowTxt = !pl ? "–" : pl.doubled
+      ? `<b>${fmt(pl.effective)}</b>${multiBadge(pl)}` : fmt(pl.effective);
+    const projTxt = !pl ? "–" : fmt(pl.projected);
+    return `<tr class="${r.position===1?'lead':''}">
+      <td class="rank">${r.position}.${r.draw?'<span class="muted">*</span>':''}</td>
+      <td class="nick">${esc(pred.nickname)}</td>
+      <td>${playerTxt}${noStats}</td>
+      <td class="num">${fmt(pred.points)}</td>
+      <td class="num">${nowTxt}</td>
+      <td class="num muted">${pl?"#"+pl.rank_effective:"–"}</td>
+      <td class="num">${projTxt}</td>
+      <td class="num muted">${projPositionByNickname.has(pred.nickname)?projPositionByNickname.get(pred.nickname)+".":"–"}</td>
+      <td class="num">${diffTxt}</td>
+    </tr>`;
+  }).join("");
+  const anyDraw = nowRows.some(r => r.draw);
+  return `<div class="tablecard"><table>
+    <thead><tr>
+      <th>Sija</th><th>Nimimerkki</th><th>Veikattu pelaaja</th>
+      <th class="num">Veikkaus</th><th class="num">Pisteet nyt</th>
+      <th class="num">Pörssisija</th><th class="num">Ennuste</th>
+      <th class="num">Enn. sija</th><th class="num" title="Pelaajan ennuste miinus veikattu pistemäärä">Ero</th>
+    </tr></thead><tbody>${body}</tbody>
+  </table></div>
+  ${anyDraw?`<div class="footnote">* tasatilanne — järjestyksen ratkaisisi arpa</div>`:""}`;
+}
+
+const SCORING_TABLE_DEFAULT_ROWS = 5;
+
+// Game-style multiplier badge for a doubled late arrival, with an explanation tooltip.
+function multiBadge(pl){
+  const tip = `Tuplapisteet! Myöhemmin saapunut pelaaja debytoi 20.12.2026 tai myöhemmin, ` +
+    `joten pisteet lasketaan kisassa tuplana: ${fmt(pl.points)} p → ${fmt(pl.effective)} p. ` +
+    `Myös ennuste lasketaan tuplattuna.`;
+  return `<span class="multi" title="${esc(tip)}">×2</span>`;
+}
+
+// Picker tags for the scoring race: show at most 3; beyond that, show the first
+// one plus "ja N muuta" with the full list in a tooltip.
+function pickerTags(pickers){
+  const tag = n => `<span class="tag">${esc(n)}</span>`;
+  if(pickers.length <= 3) return pickers.map(tag).join("");
+  return tag(pickers[0]) +
+    `<span class="tag" title="${esc(pickers.join(", "))}">ja ${pickers.length - 1} muuta</span>`;
+}
+
+function scoringTable(players, pickersByPlayer){
+  const body = players.map((pl,i) => {
+    const pickers = pickersByPlayer.get(pl.key) || [];
+    const tags = pickerTags(pickers);
+    const pointsTxt = pl.doubled
+      ? `<b>${fmt(pl.effective)}</b>${multiBadge(pl)}`
+      : `<b>${fmt(pl.points)}</b>`;
+    const tieMark = pl.tie_effective ? '<span class="muted" title="Täysi tasatilanne — lisää 1. maalin ajankohta config.json:iin (firstGoals)">†</span>' : "";
+    const firstGoalTip = pl.firstGoal
+      ? ` title="1. maali: ${esc(new Date(pl.firstGoal).toLocaleString("fi-FI", FI_DATETIME))}"` : "";
+    return `<tr${i >= SCORING_TABLE_DEFAULT_ROWS ? ' class="extra"' : ''}>
+      <td class="rank">${pl.rank_effective}.${tieMark}</td>
+      <td class="muted">#${esc(pl.jersey ?? "–")}</td>
+      <td${firstGoalTip}>${esc(pl.name)}${pl.virtual?' <span class="muted small">(ei vielä tilastoissa)</span>':""}</td>
+      <td class="num">${fmt(pl.gamesPlayed)}</td>
+      <td class="num">${fmt(pl.goals)}</td>
+      <td class="num">${fmt(pl.assists)}</td>
+      <td class="num">${pointsTxt}</td>
+      <td class="num muted">${fmt(pl.projected)}</td>
+      <td>${tags}</td>
+    </tr>`;
+  }).join("");
+  const hiddenCount = Math.max(0, players.length - SCORING_TABLE_DEFAULT_ROWS);
+  return `<div class="tablecard" id="scoring"><table>
+    <thead><tr>
+      <th>Sija</th><th>#</th><th>Pelaaja</th>
+      <th class="num">O</th><th class="num">M</th><th class="num">S</th>
+      <th class="num">P</th><th class="num">Ennuste</th><th>Veikannut</th>
+    </tr></thead><tbody>${body}</tbody>
+  </table></div>
+  ${hiddenCount > 0 ? `<button class="toggle" onclick="toggleScoring(this)"
+    data-more="Näytä kaikki (${players.length})" data-less="Näytä top ${SCORING_TABLE_DEFAULT_ROWS}">Näytä kaikki (${players.length})</button>` : ""}`;
+}
+
+// Expand/collapse the scoring table beyond the default top rows.
+function toggleScoring(btn){
+  const card = document.getElementById("scoring");
+  const expanded = card.classList.toggle("expanded");
+  btn.textContent = expanded ? btn.dataset.less : btn.dataset.more;
+}
+
+function tiebreakTable(predictions, projectedGoals){
+  const body = [...predictions]
+    .sort((a,b) => Math.abs(a.tiebreak-projectedGoals) - Math.abs(b.tiebreak-projectedGoals))
+    .map(pred => {
+      const d = pred.tiebreak - projectedGoals;
+      return `<tr>
+        <td class="nick">${esc(pred.nickname)}</td>
+        <td class="num">${fmt(pred.tiebreak)}</td>
+        <td class="num muted">${d===0?"±0":(d>0?"+":"−")+fmt(Math.abs(d))}</td>
+      </tr>`;
+    }).join("");
+  return `<div class="tablecard"><table style="min-width:360px;max-width:480px">
+    <thead><tr><th>Nimimerkki</th><th class="num">Vastaus</th>
+    <th class="num">Ero ennusteeseen (${fmt(projectedGoals)})</th></tr></thead>
+    <tbody>${body}</tbody></table></div>`;
+}
+
+// Data-quality warnings for the maintainer (typos, duplicates, missing locks).
+function adminWarnings(config, data){
+  const listed = new Set(config.players.map(p => normalize(p.name)));
+  const warnings = [];
+  const seen = new Set();
+  data.predictions.forEach(pred => {
+    const nk = normalize(pred.nickname);
+    if(seen.has(nk)) warnings.push(`Nimimerkillä <b>${esc(pred.nickname)}</b> on useampi veikkaus.`);
+    seen.add(nk);
+    if(!listed.has(normalize(pred.player)))
+      warnings.push(`<b>${esc(pred.nickname)}</b>: pelaajaa &quot;${esc(pred.player)}&quot; ei löydy config.json:n pelaajalistasta (kirjoitusvirhe?).`);
+    if(typeof pred.points !== "number" || typeof pred.tiebreak !== "number")
+      warnings.push(`<b>${esc(pred.nickname)}</b>: points/tiebreak puuttuu tai ei ole numero.`);
+  });
+  (data.lateArrivals||[]).forEach(p => {
+    const locked = data.predictions.some(pred => normalize(pred.lockedPlayer||"") === normalize(p.name));
+    if(!locked) warnings.push(`Myöhemmin saapunut <b>${esc(p.name)}</b> on listattu, mutta kukaan ei ole lukinnut häntä.`);
+  });
+  return warnings;
+}
+
+// ---------- main ----------
+
+async function main(){
+  const [config, data, stats, meta] = await Promise.all([
+    loadJSON("config.json"),
+    loadJSON("predictions.json"),
+    loadJSON("data/stats.json"),
+    loadJSON("data/meta.json").catch(() => ({}))
+  ]);
+
+  const totalGames = config.regularSeasonGames || 64;
+  const players = buildPlayers(stats, data.lateArrivals || [], config.firstGoals || {});
+  const playerByKey = new Map(players.map(p => [p.key, p]));
+
+  // Add virtual rows for predicted players who are not in the stats (yet).
+  data.predictions.forEach(pred => {
+    const tn = targetName(pred);
+    if(tn && !playerByKey.has(normalize(tn))){
+      const cfgPlayer = config.players.find(p => normalize(p.name) === normalize(tn));
+      const vp = { name: tn, key: normalize(tn), jersey: cfgPlayer ? cfgPlayer.number : "–",
+        gamesPlayed:0, goals:0, assists:0, points:0, teamGames:0, doubled:false,
+        firstGoal:null, firstGoalTs:Infinity, virtual:true };
+      players.push(vp); playerByKey.set(vp.key, vp);
+    }
+  });
+
+  const teamGamesPlayed = Math.min(totalGames,
+    Math.max(0, ...players.map(p => p.teamGames), ...players.map(p => p.gamesPlayed)));
+  const teamGoals = stats.reduce((sum,p) => sum + (p.goals||0), 0);
+  const gamesRemaining = Math.max(0, totalGames - teamGamesPlayed);
+
+  // effective = points (doubled for a qualifying late arrival);
+  // projected = current pace extended over the remaining team games.
+  players.forEach(pl => {
+    pl.effective = pl.points * (pl.doubled ? 2 : 1);
+    const projectedRaw = pl.gamesPlayed > 0
+      ? pl.points + (pl.points / pl.gamesPlayed) * gamesRemaining : 0;
+    pl.projected = Math.round(projectedRaw) * (pl.doubled ? 2 : 1);
+  });
+
+  rankPlayers(players, "effective");
+  rankPlayers(players, "projected");
+
+  const projectedGoals = teamGamesPlayed > 0
+    ? Math.round(teamGoals / teamGamesPlayed * totalGames) : 0;
+
+  const updatedTxt = meta.updatedAt
+    ? new Date(meta.updatedAt).toLocaleString("fi-FI", FI_DATETIME) : "–";
+  document.getElementById("meta").innerHTML = `
+    <span>Otteluita <b>${fmt(teamGamesPlayed)} / ${fmt(totalGames)}</b></span>
+    <span>SaiPan maalit <b>${fmt(teamGoals)}</b> (ennuste ${fmt(projectedGoals)})</span>
+    <span>Veikkauksia <b>${fmt(data.predictions.length)}</b></span>
+    <span>Päivitetty <b>${updatedTxt}</b></span>`;
+
+  let html = "";
+
+  const seasonStarted = teamGamesPlayed > 0 && players.some(p => p.gamesPlayed > 0);
+  // Tiebreak answers are about the season-end total, so mid-season they are
+  // compared against the goal-pace projection, not the current total.
+  const nowRows = orderCompetition(data.predictions, playerByKey, "effective",
+    seasonStarted ? projectedGoals : NaN);
+
+  if(!seasonStarted){
+    html += `<div class="notice">Kausi ei ole vielä alkanut — tilanne ja ennusteet päivittyvät,
+      kun kiekko putoaa jäähän. Alla jätetyt veikkaukset.</div>`;
+    html += `<h2>Veikkaukset</h2>` + standingsTable(nowRows, new Map());
+  } else {
+    const projRows = orderCompetition(data.predictions, playerByKey, "projected", projectedGoals);
+    const projPositionByNickname = new Map(projRows.map(r => [r.pred.nickname, r.position]));
+
+    html += `<div class="cards">
+      ${leaderCardHTML("Kärjessä nyt", nowRows, "effective", "")}
+      ${leaderCardHTML("Ennustettu voittaja", projRows, "projected", " nykytahdilla")}
+    </div>`;
+
+    html += `<h2>Tulostaulu</h2>
+      <p class="hint">Sija: pörssisija → lähin pisteveikkaus → tiebreak (vs. maaliennuste ${fmt(projectedGoals)}).
+      Ennuste = pisteet nykytahdilla kauden lopussa.</p>`;
+    html += standingsTable(nowRows, projPositionByNickname);
+    if(IS_ADMIN) html += `<button class="toggle" onclick="exportStandingsImage()">⬇ Lataa tulostaulu (PNG)</button>`;
+  }
+
+  html += `<h2>Sisäinen pistepörssi</h2>
+    <p class="hint" title="Art Ross -tiebreak: pisteet → maalit → vähemmän otteluita → aikaisempi 1. maali">Pisteet → maalit → vähemmän otteluita → aikaisempi 1. maali.</p>`;
+  const pickersByPlayer = new Map();
+  data.predictions.forEach(pred => {
+    const tn = targetName(pred);
+    if(!tn) return;
+    const k = normalize(tn);
+    if(!pickersByPlayer.has(k)) pickersByPlayer.set(k, []);
+    pickersByPlayer.get(k).push(pred.nickname);
+  });
+  html += scoringTable([...players].sort((a,b) => a.rank_effective - b.rank_effective), pickersByPlayer);
+
+  html += `<h2>Tiebreak: SaiPan maalit runkosarjassa</h2>
+    <p class="hint">Maaleja tähän mennessä: <b>${fmt(teamGoals)}</b> — tahtiennuste koko kaudelle:
+    <b>${fmt(projectedGoals)}</b>.</p>`;
+  html += tiebreakTable(data.predictions, projectedGoals);
+
+  // Store what the image export needs (admin mode only renders the button).
+  exportState = { rows: nowRows, seasonStarted, teamGamesPlayed, totalGames,
+    teamGoals, projectedGoals, updatedTxt };
+
+  const warnings = adminWarnings(config, data);
+  if(warnings.length && IS_ADMIN){
+    html += `<div class="warnbox"><b>Huomioita ylläpitäjälle:</b><br>` + warnings.join("<br>") + `</div>`;
+  }
+
+  document.getElementById("app").innerHTML = html;
+}
+
+main().catch(err => {
+  const servingHint = location.protocol === "file:" || /404/.test(err.message)
+    ? `<br><br><b>Huom:</b> sivu hakee käynnistyessään tiedostot config.json, predictions.json
+       ja data/stats.json samasta kansiosta, joten pelkkä index.html:n avaaminen ei riitä.
+       Avaa koko kansio web-palvelimen kautta — esim. GitHub Pages, VS Coden Live Server
+       -laajennus tai kansiossa ajettu <code>python3 -m http.server</code>.`
+    : "";
+  document.getElementById("app").innerHTML =
+    `<div class="warnbox"><b>Virhe:</b> ${esc(err.message)} — tarkista että tiedostot
+     config.json, predictions.json ja data/stats.json ovat kunnossa.${servingHint}</div>`;
+  console.error(err);
+});
+</script>
+</body>
+</html>

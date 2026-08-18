@@ -1,0 +1,119 @@
+{
+  "competition": "SaiPan pistepörssikisa 2026-2027",
+  "season": 2026,
+  "seasonNote": "IMPORTANT: season 2026 = last season 2025-26 (development data). Change to 2027 when the 2026-27 season starts and the Liiga API serves its data.",
+  "regularSeasonGames": 64,
+  "doubleRuleNote": "A late-arriving player's points are doubled if he debuts on or after 20 Dec 2026 (Jokerit-SaiPa, game 33/64). The double flag is set in predictions.json.",
+  "firstGoalsNote": "Art Ross tiebreak 3: earliest first goal. Only needed when players are fully tied (points, goals, games). Add entries like \"Firstname Lastname\": \"2026-09-12T19:42:00+03:00\" - also shown as a tooltip on the player's name.",
+  "firstGoals": {},
+  "players": [
+    {
+      "number": 2,
+      "name": "Andrew Peski"
+    },
+    {
+      "number": 6,
+      "name": "Santeri Airola"
+    },
+    {
+      "number": 7,
+      "name": "Samuli Niinisaari"
+    },
+    {
+      "number": 10,
+      "name": "Einar Emanuelsson"
+    },
+    {
+      "number": 11,
+      "name": "Petr Fridrich"
+    },
+    {
+      "number": 12,
+      "name": "Samu Bau"
+    },
+    {
+      "number": 13,
+      "name": "Richard Zemlicka"
+    },
+    {
+      "number": 14,
+      "name": "Brian Kramer"
+    },
+    {
+      "number": 15,
+      "name": "Miikka Salomäki"
+    },
+    {
+      "number": 17,
+      "name": "Vertti Svensk"
+    },
+    {
+      "number": 18,
+      "name": "Juuso Heikkilä"
+    },
+    {
+      "number": 19,
+      "name": "Veeti Moilanen"
+    },
+    {
+      "number": 22,
+      "name": "Karri Aho"
+    },
+    {
+      "number": 28,
+      "name": "Aarne Intonen"
+    },
+    {
+      "number": 34,
+      "name": "Mikko Perttu"
+    },
+    {
+      "number": 38,
+      "name": "Joonas Rajala"
+    },
+    {
+      "number": 41,
+      "name": "Nicholas Zabaneh"
+    },
+    {
+      "number": 50,
+      "name": "Saku Salminen"
+    },
+    {
+      "number": 52,
+      "name": "Petrus Palmu"
+    },
+    {
+      "number": 55,
+      "name": "Ondrej Trejbal"
+    },
+    {
+      "number": 57,
+      "name": "Otto Hokkanen"
+    },
+    {
+      "number": 62,
+      "name": "Miro Tauslahti"
+    },
+    {
+      "number": 70,
+      "name": "Janne Naukkarinen"
+    },
+    {
+      "number": 75,
+      "name": "Patrik Siikanen"
+    },
+    {
+      "number": 81,
+      "name": "Eero Klintrup"
+    },
+    {
+      "number": 92,
+      "name": "Anze Zezelj"
+    },
+    {
+      "number": "XX",
+      "name": "Myöhemmin saapuva pelaaja"
+    }
+  ]
+}

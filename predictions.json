@@ -1,0 +1,23 @@
+{
+  "_howto": [
+    "Add one entry per prediction to the 'predictions' list.",
+    "  nickname = the participant's nickname on the Jatkoaika forum",
+    "  player   = player name EXACTLY as in the config.json player list (or 'Myöhemmin saapuva pelaaja')",
+    "  points   = predicted point total at the end of the regular season",
+    "  tiebreak = answer to the tiebreak question (SaiPa's total goals in the regular season)",
+    "When a 'Myöhemmin saapuva pelaaja' participant locks in an arrived player, add to their entry:",
+    "  \"lockedPlayer\": \"Firstname Lastname\"",
+    "If the locked player debuts on or after 20 Dec 2026 (Jokerit-SaiPa), also add the player to",
+    "the lateArrivals list with \"double\": true - the app then doubles his points in the standings.",
+    "NOTE: the entries below are EXAMPLES - replace them with real predictions."
+  ],
+  "predictions": [
+    { "nickname": "fundaet", "player": "Samuli Niinisaari", "points": 57, "tiebreak": 234 },
+    { "nickname": "esimerkki1", "player": "Petrus Palmu", "points": 48, "tiebreak": 180 },
+    { "nickname": "esimerkki2", "player": "Miikka Salomäki", "points": 39, "tiebreak": 172 },
+    { "nickname": "esimerkki3", "player": "Patrik Siikanen", "points": 44, "tiebreak": 195 },
+    { "nickname": "esimerkki4", "player": "Myöhemmin saapuva pelaaja", "points": 46, "tiebreak": 201 }
+  ],
+  "lateArrivals": [
+  ]
+}
