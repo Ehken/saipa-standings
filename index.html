@@ -77,6 +77,7 @@
     border-radius:7px;padding:5px 14px;font:inherit;font-size:13.5px;
     color:var(--ink2);cursor:pointer}
   .toggle:hover{border-color:#c9c9c4}
+  select.toggle{padding:5px 8px;margin-right:6px}
   .predlist{width:100%;background:var(--card);border:1px solid var(--line);
     border-radius:10px;padding:12px 14px;font:13.5px/1.6 ui-monospace,SFMono-Regular,
     Menlo,Consolas,monospace;color:var(--ink);resize:vertical}
@@ -124,11 +125,15 @@ let exportState = null;
 // Draw the current standings as a game/broadcast-style PNG (for posting on the
 // forum) and download it. Pure canvas, no dependencies.
 function exportStandingsImage(){
-  if(!exportState || !exportState.seasonStarted){
-    alert("Ei vielä tilannetta vietäväksi — kausi ei ole alkanut.");
-    return;
-  }
-  const {rows, teamGamesPlayed, totalGames, teamGoals, projectedGoals, updatedTxt} = exportState;
+  if(!exportState) return;
+  // Before the season the image shows the received predictions in signup order.
+  const {rows: allRows, seasonStarted, teamGamesPlayed, totalGames, teamGoals, projectedGoals, updatedTxt} = exportState;
+  // Row count comes from the admin selector (Top 3/5/10/20/all).
+  const countSel = document.getElementById("exportCount");
+  const rowCount = countSel && countSel.value !== "all"
+    ? Math.min(parseInt(countSel.value, 10), allRows.length) : allRows.length;
+  const rows = allRows.slice(0, rowCount);
+  const truncated = rowCount < allRows.length;
   const W = 1000, PAD = 40, HEADER_H = 140, COLHEAD_H = 28,
         ROW_H = 62, ROW_GAP = 10, FOOTER_H = 66;
   const H = HEADER_H + COLHEAD_H + rows.length * (ROW_H + ROW_GAP) + FOOTER_H;
@@ -176,13 +181,16 @@ function exportStandingsImage(){
   // --- header ---
   ctx.fillStyle = GOLD;
   ctx.font = "italic 800 36px " + FONT;
-  ctx.fillText("TULOSTAULU", PAD, 68);
+  ctx.fillText(seasonStarted ? "TULOSTAULU" : "VEIKKAUKSET", PAD, 68);
   ctx.fillStyle = "#ffffff";
   ctx.font = "600 13px " + FONT;
   ctx.fillText("S A I P A N   P I S T E P Ö R S S I K I S A   2 0 2 6 - 2 0 2 7", PAD, 94);
   ctx.fillStyle = MUTED;
   ctx.font = "400 13px " + FONT;
-  ctx.fillText(`Otteluita ${teamGamesPlayed}/${totalGames}  ·  SaiPan maalit ${teamGoals} (ennuste ${projectedGoals})  ·  ${updatedTxt}`, PAD, 118);
+  const topTag = truncated ? `  ·  Top ${rowCount}/${allRows.length}` : "";
+  ctx.fillText(seasonStarted
+    ? `Otteluita ${teamGamesPlayed}/${totalGames}  ·  SaiPan maalit ${teamGoals} (ennuste ${projectedGoals})${topTag}  ·  ${updatedTxt}`
+    : `Kausi ei ole vielä alkanut  ·  Veikkauksia ${allRows.length}${topTag}  ·  ${updatedTxt}`, PAD, 118);
 
   // --- column labels ---
   const COL = { veikkausR: W - PAD - 208, pisteetR: W - PAD - 110, ennusteR: W - PAD - 12 };
@@ -199,7 +207,7 @@ function exportStandingsImage(){
   const tableTop = HEADER_H + COLHEAD_H;
   rows.forEach((r, i) => {
     const top = tableTop + i * (ROW_H + ROW_GAP);
-    const lead = r.position === 1;
+    const lead = r.position === 1 && seasonStarted;
     const pred = r.pred, pl = r.pl;
 
     // row card
@@ -247,9 +255,10 @@ function exportStandingsImage(){
     ctx.font = "500 15px " + FONT;
     ctx.fillStyle = inkSub;
     rightText(fmt(pred.points), COL.veikkausR, base);
+    const hasData = pl && !(pl.virtual && pl.gamesPlayed === 0);
     ctx.font = "800 22px " + FONT;
     ctx.fillStyle = inkBig;
-    rightText(pl ? fmt(pl.effective) : "–", COL.pisteetR, base + 1);
+    rightText(hasData ? fmt(pl.effective) : "–", COL.pisteetR, base + 1);
     if(pl && pl.doubled){
       // game-style ×2 multiplier badge
       const bx = COL.pisteetR + 10, by = base - 15, bw = 34, bh = 20;
@@ -262,7 +271,7 @@ function exportStandingsImage(){
     }
     ctx.font = "500 15px " + FONT;
     ctx.fillStyle = inkSub;
-    rightText(pl ? fmt(pl.projected) : "–", COL.ennusteR, base);
+    rightText(hasData ? fmt(pl.projected) : "–", COL.ennusteR, base);
   });
 
   // --- footer ---
@@ -271,13 +280,16 @@ function exportStandingsImage(){
   ctx.beginPath(); ctx.moveTo(PAD, fy - 18); ctx.lineTo(W - PAD, fy - 18); ctx.stroke();
   ctx.font = "400 12px " + FONT;
   ctx.fillStyle = MUTED;
-  ctx.fillText("Sija: pörssisija → lähin pisteveikkaus → tiebreak" +
-    (rows.some(r => r.draw) ? "  ·  * tasatilanne" : "") +
-    (rows.some(r => r.pl && r.pl.doubled) ? "  ·  ×2 = myöhemmin saapuneen tuplapisteet" : "") +
-    "  ·  Data: liiga.fi", PAD, fy);
+  ctx.fillText(seasonStarted
+    ? "Sija: pörssisija → lähin pisteveikkaus → tiebreak" +
+      (rows.some(r => r.draw) ? "  ·  * tasatilanne" : "") +
+      (rows.some(r => r.pl && r.pl.doubled) ? "  ·  ×2 = myöhemmin saapuneen tuplapisteet" : "") +
+      "  ·  Data: liiga.fi"
+    : "Veikkaukset ilmoittautumisjärjestyksessä  ·  Data: liiga.fi", PAD, fy);
 
   const link = document.createElement("a");
-  link.download = "saipan-pisteporssikisa-tulostaulu-" + new Date().toISOString().slice(0,10) + ".png";
+  link.download = "saipan-pisteporssikisa-" + (seasonStarted ? "tulostaulu" : "veikkaukset")
+    + "-" + new Date().toISOString().slice(0,10) + ".png";
   link.href = canvas.toDataURL("image/png");
   link.click();
 }
@@ -590,6 +602,19 @@ function sortTable(table, th, colIndex){
   }
 }
 
+// Admin controls under the standings table: row-count selector + export button.
+function exportControlsHTML(label){
+  return `<div>
+    <select id="exportCount" class="toggle" title="Montako riviä kuvaan otetaan">
+      <option value="3">Top 3</option>
+      <option value="5">Top 5</option>
+      <option value="10" selected>Top 10</option>
+      <option value="20">Top 20</option>
+      <option value="all">Kaikki</option>
+    </select><button class="toggle" onclick="exportStandingsImage()">⬇ ${label}</button>
+  </div>`;
+}
+
 // Copy the admin prediction list to the clipboard.
 function copyPredictionList(btn){
   const ta = document.getElementById("predlist");
@@ -704,6 +729,7 @@ async function main(){
     nowRows.sort((a,b) => a.idx - b.idx);
     nowRows.forEach((r,i) => { r.position = i + 1; r.draw = false; r.plain = true; });
     html += `<h2>Veikkaukset</h2>` + standingsTable(nowRows, new Map());
+    if(IS_ADMIN) html += exportControlsHTML("Lataa veikkaukset (PNG)");
   } else {
     const projRows = orderCompetition(data.predictions, playerByKey, "projected", projectedGoals);
     const projPositionByNickname = new Map(projRows.map(r => [r.pred.nickname, r.position]));
@@ -718,7 +744,7 @@ async function main(){
       Pelaajan pörssisija näkyy nimen perässä (#5). Ennuste = pisteet nykytahdilla kauden
       lopussa, perässä ero omaan veikkaukseen.</p>`;
     html += standingsTable(nowRows, projPositionByNickname);
-    if(IS_ADMIN) html += `<button class="toggle" onclick="exportStandingsImage()">⬇ Lataa tulostaulu (PNG)</button>`;
+    if(IS_ADMIN) html += exportControlsHTML("Lataa tulostaulu (PNG)");
   }
 
   html += `<h2>Sisäinen pistepörssi</h2>
