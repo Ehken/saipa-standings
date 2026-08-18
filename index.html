@@ -69,6 +69,9 @@
     border-radius:7px;padding:5px 14px;font:inherit;font-size:13.5px;
     color:var(--ink2);cursor:pointer}
   .toggle:hover{border-color:#c9c9c4}
+  .predlist{width:100%;background:var(--card);border:1px solid var(--line);
+    border-radius:10px;padding:12px 14px;font:13.5px/1.6 ui-monospace,SFMono-Regular,
+    Menlo,Consolas,monospace;color:var(--ink);resize:vertical}
   a{color:#8a6d00}
   @media (max-width:560px){ th,td{padding:7px 8px} }
 </style>
@@ -536,6 +539,21 @@ function sortTable(table, th, colIndex){
   }
 }
 
+// Copy the admin prediction list to the clipboard.
+function copyPredictionList(btn){
+  const ta = document.getElementById("predlist");
+  const done = () => {
+    const orig = "📋 Kopioi leikepöydälle";
+    btn.textContent = "✓ Kopioitu!";
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ta.value).then(done);
+  } else {
+    ta.select(); document.execCommand("copy"); done();
+  }
+}
+
 function initTableSorting(){
   document.querySelectorAll(".tablecard table").forEach(table => {
     table.querySelectorAll("thead th").forEach((th, colIndex) => {
@@ -681,6 +699,22 @@ async function main(){
     <p class="hint">Maaleja tähän mennessä: <b>${fmt(teamGoals)}</b> — tahtiennuste koko kaudelle:
     <b>${fmt(projectedGoals)}</b>.</p>`;
   html += tiebreakTable(data.predictions, projectedGoals);
+
+  // Admin-only copy-paste list of received predictions, for posting on the forum.
+  if(IS_ADMIN){
+    const lines = [...data.predictions]
+      .sort((a,b) => a.nickname.localeCompare(b.nickname, "fi", {sensitivity:"base"}))
+      .map(p => {
+        let playerTxt = p.player;
+        if(normalize(p.player) === LATE_PLAYER && p.lockedPlayer)
+          playerTxt += " → " + p.lockedPlayer;
+        return `${p.nickname}: ${playerTxt} - ${p.points} (${p.tiebreak})`;
+      });
+    html += `<h2>Veikkauslista foorumille</h2>
+      <p class="hint">Muoto: nimimerkki: pelaaja - pisteveikkaus (tiebreak-vastaus). Aakkosjärjestyksessä.</p>
+      <textarea id="predlist" class="predlist" readonly rows="${Math.min(lines.length + 1, 30)}">${esc(lines.join("\n"))}</textarea>
+      <br><button class="toggle" onclick="copyPredictionList(this)">📋 Kopioi leikepöydälle</button>`;
+  }
 
   // Store what the image export needs (admin mode only renders the button).
   exportState = { rows: nowRows, seasonStarted, teamGamesPlayed, totalGames,
