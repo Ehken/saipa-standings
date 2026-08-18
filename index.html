@@ -65,7 +65,7 @@
   .tb{margin-left:4px;font-size:12px;cursor:help}
   /* Fixed layout: column widths sized to the longest possible names, so the
      table never overflows or shifts as content changes */
-  #standings table{table-layout:fixed;min-width:908px}
+  #standings table{table-layout:fixed;min-width:918px}
   #standings td,#standings th{overflow:hidden;text-overflow:ellipsis}
   tr.extra{display:none}
   .tablecard.expanded tr.extra{display:table-row}
@@ -422,26 +422,30 @@ function standingsTable(nowRows, projPositionByNickname){
       ? ' <span class="muted" title="Ei vielä tilastoissa">*</span>' : "";
     // A player with no stats row yet has no meaningful numbers to show.
     const noData = !pl || (pl.virtual && pl.gamesPlayed === 0);
-    const diff = noData ? null : pl.projected - pred.points;
-    const diffTxt = diff === null ? '<span class="muted">–</span>'
-      : diff === 0 ? "±0"
-      : diff > 0 ? `<span class="pos">+${fmt(diff)}</span>`
-                 : `<span class="neg">−${fmt(-diff)}</span>`;
+    // Scoring-race rank is merged into the player cell.
+    const rankTag = noData ? "" : ` <span class="muted small">#${pl.rank_effective}</span>`;
     const nowTxt = noData ? "–" : pl.doubled
       ? `<b>${fmt(pl.effective)}</b>${multiBadge(pl)}` : fmt(pl.effective);
-    const projTxt = noData ? "–" : fmt(pl.projected);
+    // Projection cell merges the pace projection, the colored diff to the guess,
+    // and (in the tooltip) the projected contest position.
+    const diff = noData ? null : pl.projected - pred.points;
+    const diffTxt = diff === null ? ""
+      : diff === 0 ? ' <span class="muted small">±0</span>'
+      : diff > 0 ? ` <span class="pos small">+${fmt(diff)}</span>`
+                 : ` <span class="neg small">−${fmt(-diff)}</span>`;
+    const projPos = projPositionByNickname.get(pred.nickname);
+    const projTitle = projPos ? `Sija kisassa tällä ennusteella: ${projPos}. — ero omaan veikkaukseen näkyy luvun perässä` : "";
+    const projCell = noData ? "–"
+      : `<span title="${esc(projTitle)}">${fmt(pl.projected)}${diffTxt}</span>`;
     const tbIcon = r.tbUsed
       ? `<span class="tb" title="Järjestys ratkesi tiebreak-vastauksella: oma vastaus ${fmt(pred.tiebreak)}, ero maaliennusteeseen ${fmt(r.tiebreakDiff)}.">⚖</span>` : "";
     return `<tr class="${r.position===1 && !r.plain?'lead':''}">
       <td class="rank">${r.position}.${r.draw?'<span class="muted">†</span>':''}${tbIcon}</td>
       <td class="nick" title="Tiebreak-vastaus: ${fmt(pred.tiebreak)}">${esc(pred.nickname)}</td>
-      <td title="${esc(playerPlain)}">${playerTxt}${noStats}</td>
+      <td title="${esc(playerPlain)}">${playerTxt}${noStats}${rankTag}</td>
       <td class="num">${fmt(pred.points)}</td>
       <td class="num">${nowTxt}</td>
-      <td class="num muted">${noData?"–":"#"+pl.rank_effective}</td>
-      <td class="num">${projTxt}</td>
-      <td class="num muted">${projPositionByNickname.has(pred.nickname)?projPositionByNickname.get(pred.nickname)+".":"–"}</td>
-      <td class="num">${diffTxt}</td>
+      <td class="num">${projCell}</td>
     </tr>`;
   }).join("");
   const anyDraw = nowRows.some(r => r.draw);
@@ -452,15 +456,13 @@ function standingsTable(nowRows, projPositionByNickname){
   ].filter(Boolean).join(" · ");
   return `<div class="tablecard" id="standings"><table>
     <colgroup>
-      <col style="width:54px"><col style="width:148px"><col style="width:184px">
-      <col style="width:96px"><col style="width:106px"><col style="width:100px">
-      <col style="width:90px"><col style="width:88px"><col style="width:60px">
+      <col style="width:58px"><col style="width:170px"><col style="width:300px">
+      <col style="width:110px"><col style="width:130px"><col style="width:150px">
     </colgroup>
     <thead><tr>
       <th>Sija</th><th>Nimimerkki</th><th>Veikattu pelaaja</th>
       <th class="num">Veikkaus</th><th class="num">Pisteet nyt</th>
-      <th class="num">Pörssisija</th><th class="num">Ennuste</th>
-      <th class="num">Enn. sija</th><th class="num" title="Pelaajan ennuste miinus veikattu pistemäärä">Ero</th>
+      <th class="num" title="Pelaajan pisteet nykytahdilla kauden lopussa, perässä ero veikkaukseen">Ennuste</th>
     </tr></thead><tbody>${body}</tbody>
   </table></div>
   ${footnotes?`<div class="footnote">${footnotes}</div>`:""}`;
@@ -705,7 +707,8 @@ async function main(){
 
     html += `<h2>Tulostaulu</h2>
       <p class="hint">Sija: pörssisija → lähin pisteveikkaus → tiebreak (vs. maaliennuste ${fmt(projectedGoals)}).
-      Ennuste = pisteet nykytahdilla kauden lopussa.</p>`;
+      Pelaajan pörssisija näkyy nimen perässä (#5). Ennuste = pisteet nykytahdilla kauden
+      lopussa, perässä ero omaan veikkaukseen.</p>`;
     html += standingsTable(nowRows, projPositionByNickname);
     if(IS_ADMIN) html += `<button class="toggle" onclick="exportStandingsImage()">⬇ Lataa tulostaulu (PNG)</button>`;
   }
