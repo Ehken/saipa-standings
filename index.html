@@ -59,6 +59,7 @@
     background:linear-gradient(135deg,#ffe15c,#ffc400);color:#1d1d1f;
     font-weight:800;font-style:italic;font-size:12px;letter-spacing:.4px;
     box-shadow:0 1px 3px rgba(214,160,0,.55);cursor:help;transform:skewX(-6deg)}
+  .tb{margin-left:4px;font-size:12px;cursor:help}
   tr.extra{display:none}
   .tablecard.expanded tr.extra{display:table-row}
   /* Fixed layout so expanding the table never changes column widths */
@@ -361,6 +362,18 @@ function orderCompetition(predictions, playerByKey, key, referenceGoals){
   const groups = {};
   rows.forEach(r => (groups[r.position] = groups[r.position] || []).push(r));
   Object.values(groups).forEach(g => { if(g.length > 1) g.forEach(r => r.draw = true); });
+  // Flag rows whose mutual order was decided by the tiebreak answer:
+  // same player rank AND same points diff, but different tiebreak diffs.
+  const tbGroups = {};
+  rows.forEach(r => {
+    if(!Number.isFinite(r.rank)) return;
+    const k = r.rank + "|" + r.pointsDiff;
+    (tbGroups[k] = tbGroups[k] || []).push(r);
+  });
+  Object.values(tbGroups).forEach(g => {
+    if(g.length > 1 && new Set(g.map(r => r.tiebreakDiff)).size > 1)
+      g.forEach(r => r.tbUsed = true);
+  });
   return rows;
 }
 
@@ -405,9 +418,11 @@ function standingsTable(nowRows, projPositionByNickname){
     const nowTxt = noData ? "–" : pl.doubled
       ? `<b>${fmt(pl.effective)}</b>${multiBadge(pl)}` : fmt(pl.effective);
     const projTxt = noData ? "–" : fmt(pl.projected);
+    const tbIcon = r.tbUsed
+      ? `<span class="tb" title="Järjestys ratkesi tiebreak-vastauksella: oma vastaus ${fmt(pred.tiebreak)}, ero maaliennusteeseen ${fmt(r.tiebreakDiff)}.">⚖</span>` : "";
     return `<tr class="${r.position===1 && !r.plain?'lead':''}">
-      <td class="rank">${r.position}.${r.draw?'<span class="muted">*</span>':''}</td>
-      <td class="nick">${esc(pred.nickname)}</td>
+      <td class="rank">${r.position}.${r.draw?'<span class="muted">*</span>':''}${tbIcon}</td>
+      <td class="nick" title="Tiebreak-vastaus: ${fmt(pred.tiebreak)}">${esc(pred.nickname)}</td>
       <td>${playerTxt}${noStats}</td>
       <td class="num">${fmt(pred.points)}</td>
       <td class="num">${nowTxt}</td>
@@ -566,28 +581,6 @@ function initTableSorting(){
   });
 }
 
-// Before the season there is nothing to compare against: keep signup order, no diff.
-function tiebreakTable(predictions, projectedGoals, started){
-  const rows = started
-    ? [...predictions].sort((a,b) =>
-        Math.abs(a.tiebreak-projectedGoals) - Math.abs(b.tiebreak-projectedGoals))
-    : predictions;
-  const body = rows.map(pred => {
-    const d = pred.tiebreak - projectedGoals;
-    const diffTxt = !started ? "–" : d===0 ? "±0" : (d>0?"+":"−")+fmt(Math.abs(d));
-    return `<tr>
-      <td class="nick">${esc(pred.nickname)}</td>
-      <td class="num">${fmt(pred.tiebreak)}</td>
-      <td class="num muted">${diffTxt}</td>
-    </tr>`;
-  }).join("");
-  const diffHeader = started ? `Ero ennusteeseen (${fmt(projectedGoals)})` : "Ero ennusteeseen";
-  return `<div class="tablecard"><table>
-    <thead><tr><th>Nimimerkki</th><th class="num">Vastaus</th>
-    <th class="num">${diffHeader}</th></tr></thead>
-    <tbody>${body}</tbody></table></div>`;
-}
-
 // Data-quality warnings for the maintainer (typos, duplicates, missing locks).
 function adminWarnings(config, data){
   const listed = new Set(config.players.map(p => normalize(p.name)));
@@ -705,12 +698,6 @@ async function main(){
     pickersByPlayer.get(k).push(pred.nickname);
   });
   html += scoringTable([...players].sort((a,b) => a.rank_effective - b.rank_effective), pickersByPlayer);
-
-  html += `<h2>Tiebreak: SaiPan maalit runkosarjassa</h2>
-    <p class="hint">${seasonStarted
-      ? `Maaleja tähän mennessä: <b>${fmt(teamGoals)}</b> — tahtiennuste koko kaudelle: <b>${fmt(projectedGoals)}</b>.`
-      : `Vastaukset ilmoittautumisjärjestyksessä — vertailu alkaa, kun kausi alkaa.`}</p>`;
-  html += tiebreakTable(data.predictions, projectedGoals, seasonStarted);
 
   // Admin-only copy-paste list of received predictions, for posting on the forum.
   if(IS_ADMIN){
