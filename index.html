@@ -437,6 +437,8 @@ function standingsTable(nowRows, projPositionByNickname){
     const projTitle = projPos ? `Sija kisassa tällä ennusteella: ${projPos}. — ero omaan veikkaukseen näkyy luvun perässä` : "";
     const projCell = noData ? "–"
       : `<span title="${esc(projTitle)}">${fmt(pl.projected)}${diffTxt}</span>`;
+    // data-sort: clicking the Ennuste header sorts by projected CONTEST position.
+    const projSort = projPos ?? "";
     const tbIcon = r.tbUsed
       ? `<span class="tb" title="Järjestys ratkesi tiebreak-vastauksella: oma vastaus ${fmt(pred.tiebreak)}, ero maaliennusteeseen ${fmt(r.tiebreakDiff)}.">⚖</span>` : "";
     return `<tr class="${r.position===1 && !r.plain?'lead':''}">
@@ -445,7 +447,7 @@ function standingsTable(nowRows, projPositionByNickname){
       <td title="${esc(playerPlain)}">${playerTxt}${noStats}${rankTag}</td>
       <td class="num">${fmt(pred.points)}</td>
       <td class="num">${nowTxt}</td>
-      <td class="num">${projCell}</td>
+      <td class="num" data-sort="${projSort}">${projCell}</td>
     </tr>`;
   }).join("");
   const anyDraw = nowRows.some(r => r.draw);
@@ -462,7 +464,7 @@ function standingsTable(nowRows, projPositionByNickname){
     <thead><tr>
       <th>Sija</th><th>Nimimerkki</th><th>Veikattu pelaaja</th>
       <th class="num">Veikkaus</th><th class="num">Pisteet nyt</th>
-      <th class="num" title="Pelaajan pisteet nykytahdilla kauden lopussa, perässä ero veikkaukseen">Ennuste</th>
+      <th class="num" data-sort-first="asc" title="Pelaajan pisteet nykytahdilla kauden lopussa, perässä ero veikkaukseen. Klikkaus järjestää ennustetun kisajärjestyksen mukaan (voittaja ensin).">Ennuste</th>
     </tr></thead><tbody>${body}</tbody>
   </table></div>
   ${footnotes?`<div class="footnote">${footnotes}</div>`:""}`;
@@ -541,6 +543,11 @@ function toggleScoring(btn){
 
 function cellSortValue(row, colIndex){
   const cell = row.cells[colIndex];
+  // An explicit data-sort attribute wins over the visible text.
+  if(cell && cell.dataset.sort !== undefined){
+    if(cell.dataset.sort === "") return {num: null, text: ""};
+    return {num: parseFloat(cell.dataset.sort), text: cell.dataset.sort};
+  }
   const text = cell ? cell.textContent.trim().replace(/−/g, "-") : "";
   if(text === "" || text === "-" || text === "–") return {num: null, text: ""};
   const m = text.match(/-?\d+(?:[.,]\d+)?/);
@@ -555,7 +562,8 @@ function sortTable(table, th, colIndex){
 
   const prev = th.dataset.sortDir;
   table.querySelectorAll("thead th").forEach(h => delete h.dataset.sortDir);
-  const dir = prev ? (prev === "asc" ? "desc" : "asc") : (isNumeric ? "desc" : "asc");
+  const firstDir = th.dataset.sortFirst || (isNumeric ? "desc" : "asc");
+  const dir = prev ? (prev === "asc" ? "desc" : "asc") : firstDir;
   th.dataset.sortDir = dir;
 
   const sign = dir === "asc" ? 1 : -1;
