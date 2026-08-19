@@ -35,7 +35,11 @@
     { "nickname": "Kaner", "player": "Aarne Intonen", "points": 47, "tiebreak": 195 },
     { "nickname": "avatar", "player": "Petrus Palmu", "points": 60, "tiebreak": 200 },
     { "nickname": "tonz@", "player": "Aarne Intonen", "points": 50, "tiebreak": 220 },
-    { "nickname": "Läts", "player": "Samuli Niinisaari", "points": 43, "tiebreak": 177 }
+    { "nickname": "Läts", "player": "Samuli Niinisaari", "points": 43, "tiebreak": 177 },
+    { "nickname": "juice71", "player": "Petr Fridrich", "points": 46, "tiebreak": 178 },
+    { "nickname": "Tsepteri", "player": "Petr Fridrich", "points": 47, "tiebreak": 199 },
+    { "nickname": "ReuhkaTukka", "player": "Einar Emanuelsson", "points": 48, "tiebreak": 196 },
+    { "nickname": "Kukko kentälle", "player": "Petr Fridrich", "points": 52, "tiebreak": 169 }
   ],
   "lateArrivals": [
   ]
