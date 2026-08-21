@@ -44,7 +44,9 @@
     { "nickname": "Lättytakikselle", "player": "Richard Zemlicka", "points": 61, "tiebreak": 218 },
     { "nickname": "bostonlogo", "player": "Petr Fridrich", "points": 51, "tiebreak": 207 },
     { "nickname": "Ilmari Kielo", "player": "Santeri Airola", "points": 48, "tiebreak": 180 },
-    { "nickname": "AsbestiAhven", "player": "Petrus Palmu", "points": 51, "tiebreak": 207 }
+    { "nickname": "AsbestiAhven", "player": "Petrus Palmu", "points": 51, "tiebreak": 207 },
+    { "nickname": "Etäkannattaja", "player": "Patrik Siikanen", "points": 56, "tiebreak": 205 },
+    { "nickname": "Daikku", "player": "Petr Fridrich", "points": 62, "tiebreak": 222 }
   ],
   "lateArrivals": [
   ]
