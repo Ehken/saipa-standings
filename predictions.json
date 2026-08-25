@@ -46,7 +46,10 @@
     { "nickname": "Ilmari Kielo", "player": "Santeri Airola", "points": 48, "tiebreak": 180 },
     { "nickname": "AsbestiAhven", "player": "Petrus Palmu", "points": 51, "tiebreak": 207 },
     { "nickname": "Etäkannattaja", "player": "Patrik Siikanen", "points": 56, "tiebreak": 205 },
-    { "nickname": "Daikku", "player": "Petr Fridrich", "points": 62, "tiebreak": 222 }
+    { "nickname": "Daikku", "player": "Petr Fridrich", "points": 62, "tiebreak": 222 },
+    { "nickname": "neuros", "player": "Petrus Palmu", "points": 45, "tiebreak": 171 },
+    { "nickname": "Veleho", "player": "Petr Fridrich", "points": 52, "tiebreak": 200 },
+    { "nickname": "Nelssonin sena", "player": "Petr Fridrich", "points": 49, "tiebreak": 210 }
   ],
   "lateArrivals": [
   ]
