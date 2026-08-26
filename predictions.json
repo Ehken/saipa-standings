@@ -41,7 +41,7 @@
     { "nickname": "ReuhkaTukka", "player": "Einar Emanuelsson", "points": 48, "tiebreak": 196 },
     { "nickname": "Kukko kentälle", "player": "Petr Fridrich", "points": 52, "tiebreak": 169 },
     { "nickname": "Astalo", "player": "Petrus Palmu", "points": 56, "tiebreak": 188 },
-    { "nickname": "Lättytakikselle", "player": "Richard Zemlicka", "points": 61, "tiebreak": 218 },
+    { "nickname": "Lättytakikselle", "player": "Petrus Palmu", "points": 68, "tiebreak": 228 },
     { "nickname": "bostonlogo", "player": "Petr Fridrich", "points": 51, "tiebreak": 207 },
     { "nickname": "Ilmari Kielo", "player": "Santeri Airola", "points": 48, "tiebreak": 180 },
     { "nickname": "AsbestiAhven", "player": "Petrus Palmu", "points": 51, "tiebreak": 207 },
@@ -49,9 +49,12 @@
     { "nickname": "Daikku", "player": "Petr Fridrich", "points": 62, "tiebreak": 222 },
     { "nickname": "neuros", "player": "Petrus Palmu", "points": 45, "tiebreak": 171 },
     { "nickname": "Veleho", "player": "Petr Fridrich", "points": 52, "tiebreak": 200 },
-    { "nickname": "Nelssonin sena", "player": "Petr Fridrich", "points": 49, "tiebreak": 210 },
-    { "nickname": "Bamon Sickman", "player": "Juuso Heikkilä", "points": 52, "tiebreak": 218 },
-    { "nickname": "Spitfire", "player": "Petrus Palmu", "points": 52, "tiebreak": 192 }
+    { "nickname": "Huono pakki", "player": "Petr Fridrich", "points": 54, "tiebreak": 211 },
+    { "nickname": "Milkfoot", "player": "Janne Naukkarinen", "points": 46, "tiebreak": 197 },
+    { "nickname": "Hockey forever", "player": "Petr Fridrich", "points": 54, "tiebreak": 200 },
+    { "nickname": "Stona", "player": "Petr Fridrich", "points": 52, "tiebreak": 188 },
+    { "nickname": "Machulda", "player": "Petr Fridrich", "points": 51, "tiebreak": 201 },
+    { "nickname": "Lepranmies", "player": "Miikka Salomäki", "points": 56, "tiebreak": 196 }
   ],
   "lateArrivals": [
   ]
