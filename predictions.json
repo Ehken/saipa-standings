@@ -57,7 +57,9 @@
     { "nickname": "Hockey forever", "player": "Petr Fridrich", "points": 54, "tiebreak": 200 },
     { "nickname": "Stona", "player": "Petr Fridrich", "points": 52, "tiebreak": 188 },
     { "nickname": "Machulda", "player": "Petr Fridrich", "points": 51, "tiebreak": 201 },
-    { "nickname": "Lepranmies", "player": "Miikka Salomäki", "points": 56, "tiebreak": 196 }
+    { "nickname": "Lepranmies", "player": "Miikka Salomäki", "points": 56, "tiebreak": 196 },
+    { "nickname": "Kiuru", "player": "Mikko Perttu", "points": 64, "tiebreak": 211 },
+    { "nickname": "Juliet", "player": "Einar Emanuelsson", "points": 51, "tiebreak": 207 }
   ],
   "lateArrivals": [
   ]
