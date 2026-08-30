@@ -767,10 +767,12 @@ async function main(){
         let playerTxt = p.player;
         if(normalize(p.player) === LATE_PLAYER && p.lockedPlayer)
           playerTxt += " → " + p.lockedPlayer;
-        return `${p.nickname}: ${playerTxt} - ${p.points} (${p.tiebreak})`;
+        // "@nick : Player - points (tiebreak)" — the @ and the space before the
+        // colon make the nickname taggable on the forum.
+        return `@${p.nickname} : ${playerTxt} - ${p.points} (${p.tiebreak})`;
       });
     html += `<h2>Veikkauslista foorumille</h2>
-      <p class="hint">Muoto: nimimerkki: pelaaja - pisteveikkaus (tiebreak-vastaus). Aakkosjärjestyksessä.</p>
+      <p class="hint">Muoto: @nimimerkki : pelaaja - pisteveikkaus (tiebreak-vastaus). Aakkosjärjestyksessä.</p>
       <textarea id="predlist" class="predlist" readonly rows="${Math.min(lines.length + 1, 30)}">${esc(lines.join("\n"))}</textarea>
       <br><button class="toggle" onclick="copyPredictionList(this)">📋 Kopioi leikepöydälle</button>`;
   }
