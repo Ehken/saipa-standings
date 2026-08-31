@@ -60,7 +60,12 @@
     { "nickname": "Lepranmies", "player": "Miikka Salomäki", "points": 56, "tiebreak": 196 },
     { "nickname": "Kiuru", "player": "Mikko Perttu", "points": 64, "tiebreak": 211 },
     { "nickname": "Juliet", "player": "Einar Emanuelsson", "points": 51, "tiebreak": 207 },
-    { "nickname": "Silakka", "player": "Santeri Airola", "points": 52, "tiebreak": 222 }
+    { "nickname": "Silakka", "player": "Santeri Airola", "points": 52, "tiebreak": 222 },
+    { "nickname": "dingus", "player": "Petr Fridrich", "points": 47, "tiebreak": 189 },
+    { "nickname": "Kuututkija", "player": "Miikka Salomäki", "points": 50, "tiebreak": 201 },
+    { "nickname": "Agent70", "player": "Einar Emanuelsson", "points": 47, "tiebreak": 190 },
+    { "nickname": "Hamraan", "player": "Petrus Palmu", "points": 46, "tiebreak": 185 },
+    { "nickname": "Artyukhin", "player": "Petrus Palmu", "points": 52, "tiebreak": 190 }
   ],
   "lateArrivals": [
   ]
