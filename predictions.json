@@ -11,7 +11,7 @@
     "the lateArrivals list with \"double\": true - the app then doubles his points in the standings."
   ],
   "predictions": [
-    { "nickname": "dotto", "player": "Petr Fridrich", "points": 52, "tiebreak": 294 },
+    { "nickname": "dotto", "player": "Petr Fridrich", "points": 52, "tiebreak": 194 },
     { "nickname": "Hippi Hiiri", "player": "Petrus Palmu", "points": 51, "tiebreak": 199 },
     { "nickname": "makki71", "player": "Einar Emanuelsson", "points": 55, "tiebreak": 205 },
     { "nickname": "Ferris", "player": "Santeri Airola", "points": 39, "tiebreak": 167 },
