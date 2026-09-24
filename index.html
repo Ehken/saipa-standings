@@ -313,7 +313,7 @@ function buildPlayers(stats, lateArrivals, firstGoals){
       return {
         name, key: normalize(name),
         jersey: p.jersey,
-        gamesPlayed: p.playedGames ?? 0,
+        gamesPlayed: p.games ?? (p.playedGames ?? 0),
         goals: p.goals ?? 0,
         assists: p.assists ?? 0,
         points: p.points ?? 0,
